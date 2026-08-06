@@ -38,9 +38,10 @@ let currentUserRole = "admin";
 
 
 function showSection(name) {
-  if (!sections[name]) return;
-  Object.values(sections).forEach(s => s && s.classList.add('hidden'));
-  sections[name].classList.remove('hidden');
+  Object.values(sections).forEach(s => {
+    if (s) s.classList.add('hidden');
+  });
+  if (sections[name]) sections[name].classList.remove('hidden');
   navItems.forEach(item => {
     item.classList.toggle('active', item.dataset.section === name);
   });
