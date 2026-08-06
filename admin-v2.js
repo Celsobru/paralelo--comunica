@@ -12,6 +12,7 @@ const sectionTitles = {
   siteconfig: 'Configurações do Site',
   pages: 'Páginas Institucionais',
   subscribers: 'Assinantes',
+  users: 'Usuários',
 };
 
 const sections = {
@@ -28,6 +29,7 @@ const sections = {
   siteconfig: document.getElementById('section-siteconfig'),
   pages: document.getElementById('section-pages'),
   subscribers: document.getElementById('section-subscribers'),
+  users: document.getElementById('section-users'),
 };
 
 const navItems = document.querySelectorAll('.sidebar-nav-item[data-section]');
