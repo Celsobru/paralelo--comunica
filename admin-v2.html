@@ -26,7 +26,7 @@
           <span class="nav-icon">&#9823;</span>
           <span>Clientes</span>
         </button>
-        <button class="sidebar-nav-item" data-section="adspaces">
+        <button class="sidebar-nav-item" data-section="adspaces" data-role="master">
           <span class="nav-icon">&#9641;</span>
           <span>Espaços Anúncio</span>
         </button>
@@ -42,7 +42,7 @@
           <span class="nav-icon">&#9729;</span>
           <span>RSS Monitor</span>
         </button>
-        <button class="sidebar-nav-item" data-section="payments">
+        <button class="sidebar-nav-item" data-section="payments" data-role="master">
           <span class="nav-icon">&#9830;</span>
           <span>Pagamento</span>
         </button>
@@ -50,17 +50,21 @@
           <span class="nav-icon">&#9873;</span>
           <span>Reservas</span>
         </button>
-        <button class="sidebar-nav-item" data-section="newsconfig">
+        <button class="sidebar-nav-item" data-section="newsconfig" data-role="master">
           <span class="nav-icon">&#9998;</span>
           <span>Noticias</span>
         </button>
-        <button class="sidebar-nav-item" data-section="siteconfig">
+        <button class="sidebar-nav-item" data-section="siteconfig" data-role="master">
           <span class="nav-icon">&#9881;</span>
           <span>Site</span>
         </button>
         <button class="sidebar-nav-item" data-section="pages">
           <span class="nav-icon">&#9998;</span>
           <span>Páginas</span>
+        </button>
+                <button class="sidebar-nav-item" data-section="users" data-role="master">
+          <span class="nav-icon">&#128101;</span>
+          <span>Usuários</span>
         </button>
         <button class="sidebar-nav-item" data-section="subscribers">
           <span class="nav-icon">&#9733;</span>
@@ -877,6 +881,62 @@
             </div>
           </div>
         </section>
+        
+        <!-- USUÁRIOS -->
+        <section id="section-users" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Novo Usuário Administrativo</h2>
+              <span class="panel-subtitle">Crie contas para outros editores ou mestres</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="user-form" class="admin-form">
+                <input type="hidden" id="user-id">
+                <label>Nome
+                  <input type="text" id="user-name-input" required>
+                </label>
+                <label>Email
+                  <input type="email" id="user-email-input" required>
+                </label>
+                <label>Senha
+                  <input type="password" id="user-password-input" placeholder="Obrigatório para novo">
+                </label>
+                <label>Nível de Acesso
+                  <select id="user-role-input" required>
+                    <option value="comum">Comum (Apenas Edição)</option>
+                    <option value="admin">Master (Acesso Total)</option>
+                  </select>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar Usuário</button>
+                  <button type="button" class="btn btn-secondary" id="btn-user-cancel">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Usuários Cadastrados</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Email</th>
+                      <th>Nível</th>
+                      <th>Criado Em</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        
         <!-- ASSINANTES -->
         <section id="section-subscribers" class="admin-section hidden">
           <div class="admin-panel">
