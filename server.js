@@ -42,9 +42,14 @@ function requireAuth(req, res, next) {
   res.status(401).json({ error: 'Não autenticado' });
 }
 
-function requireAdmin(req, res, next) {
+function requireMaster(req, res, next) {
   if (req.session && req.session.role === 'admin') return next();
   res.status(403).json({ error: 'Acesso administrativo necessário' });
+}
+
+function requireAdmin(req, res, next) {
+  if (req.session && (req.session.role === 'admin' || req.session.role === 'comum')) return next();
+  res.status(403).json({ error: 'Acesso de editor necessário' });
 }
 
 function requireClient(req, res, next) {
@@ -82,8 +87,13 @@ app.post('/api/logout', requireAuth, (req, res) => {
 });
 
 app.get('/api/me', requireAuth, async (req, res) => {
-  const user = await getAsync('SELECT id, name, email, role FROM users WHERE id = ?', [req.session.userId]);
-  res.json(user);
+  try {
+    const user = await getAsync('SELECT id, name, email, role FROM users WHERE id = ?', [req.session.userId]);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
 });
 
 app.post('/api/users/change-password', requireAuth, async (req, res) => {
@@ -332,7 +342,7 @@ app.put('/api/admin/clients/:id', requireAdmin, async (req, res) => {
 });
 
 // ===== ADMIN AD SPACES =====
-app.get('/api/admin/ad-spaces', requireAdmin, async (req, res) => {
+app.get('/api/admin/ad-spaces', requireMaster, async (req, res) => {
   const spaces = await allAsync(`
     SELECT s.*,
       CASE WHEN a.id IS NOT NULL AND a.status = 'active'
@@ -350,7 +360,7 @@ app.get('/api/admin/ad-spaces', requireAdmin, async (req, res) => {
   res.json(spaces);
 });
 
-app.post('/api/admin/ad-spaces', requireAdmin, async (req, res) => {
+app.post('/api/admin/ad-spaces', requireMaster, async (req, res) => {
   const { name, position, description, price_cents, width, height, active } = req.body;
   const result = await runAsync(
     'INSERT INTO ad_spaces (name, position, description, price_cents, width, height, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now","localtime"))',
@@ -359,7 +369,7 @@ app.post('/api/admin/ad-spaces', requireAdmin, async (req, res) => {
   res.json({ id: result.lastID });
 });
 
-app.put('/api/admin/ad-spaces/:id', requireAdmin, async (req, res) => {
+app.put('/api/admin/ad-spaces/:id', requireMaster, async (req, res) => {
   const { id } = req.params;
   const { name, position, description, price_cents, width, height, active } = req.body;
   await runAsync(
@@ -369,7 +379,7 @@ app.put('/api/admin/ad-spaces/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/admin/ad-spaces/:id', requireAdmin, async (req, res) => {
+app.get('/api/admin/ad-spaces/:id', requireMaster, async (req, res) => {
   const space = await getAsync('SELECT * FROM ad_spaces WHERE id = ?', [req.params.id]);
   if (!space) return res.status(404).json({ error: 'Espaco nao encontrado' });
   res.json(space);
@@ -561,12 +571,12 @@ app.get('/api/admin/analytics', requireAdmin, async (req, res) => {
 });
 
 // ===== PAYMENT CONFIG =====
-app.get('/api/admin/payment-config', requireAdmin, async (req, res) => {
+app.get('/api/admin/payment-config', requireMaster, async (req, res) => {
   const config = await getAsync('SELECT * FROM payment_config WHERE id = 1');
   res.json(config || {});
 });
 
-app.put('/api/admin/payment-config', requireAdmin, async (req, res) => {
+app.put('/api/admin/payment-config', requireMaster, async (req, res) => {
   const { pix_key, pix_name, pix_city, bank_name, bank_agency, bank_account, bank_cpf, company_name, subscription_price_cents } = req.body;
   await runAsync(
     'UPDATE payment_config SET pix_key=?, pix_name=?, pix_city=?, bank_name=?, bank_agency=?, bank_account=?, bank_cpf=?, company_name=?, subscription_price_cents=?, updated_at=datetime("now","localtime") WHERE id=1',
@@ -592,12 +602,12 @@ app.get('/api/site-config', async (req, res) => {
   res.json(config || {});
 });
 
-app.get('/api/admin/site-config', requireAdmin, async (req, res) => {
+app.get('/api/admin/site-config', requireMaster, async (req, res) => {
   const config = await getAsync('SELECT * FROM site_config WHERE id = 1');
   res.json(config || {});
 });
 
-app.put('/api/admin/site-config', requireAdmin, async (req, res) => {
+app.put('/api/admin/site-config', requireMaster, async (req, res) => {
   const { site_name, site_slogan, site_description, footer_categories, inst_sobre, inst_contato, inst_anuncie, inst_privacidade, social_instagram, social_twitter, social_facebook, social_youtube, copyright, live_status, live_youtube_channel_id, live_video_url, live_title, nav_items } = req.body;
   const navItemsStr = nav_items ? (typeof nav_items === 'string' ? nav_items : JSON.stringify(nav_items)) : '[]';
   await runAsync(
@@ -1112,6 +1122,56 @@ app.get('/api/is-subscriber', requireAuth, async (req, res) => {
     [req.session.userId]
   );
   res.json({ isSubscriber: !!sub });
+});
+
+
+// ===== USERS CRUD =====
+app.get('/api/users', requireMaster, async (req, res) => {
+  try {
+    const users = await allAsync('SELECT id, name, email, role, created_at FROM users');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar usuários' });
+  }
+});
+
+app.post('/api/users', requireMaster, async (req, res) => {
+  const { name, email, password, role } = req.body;
+  if (!name || !email || !password || !role) return res.status(400).json({ error: 'Dados incompletos' });
+  try {
+    const hash = bcrypt.hashSync(password, 10);
+    await runAsync('INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, datetime("now","localtime"))', [name, email, hash, role]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao criar usuário. Email pode já existir.' });
+  }
+});
+
+app.put('/api/users/:id', requireMaster, async (req, res) => {
+  const { name, email, role, password } = req.body;
+  try {
+    if (password) {
+      const hash = bcrypt.hashSync(password, 10);
+      await runAsync('UPDATE users SET name=?, email=?, role=?, password_hash=? WHERE id=?', [name, email, role, hash, req.params.id]);
+    } else {
+      await runAsync('UPDATE users SET name=?, email=?, role=? WHERE id=?', [name, email, role, req.params.id]);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao atualizar usuário' });
+  }
+});
+
+app.delete('/api/users/:id', requireMaster, async (req, res) => {
+  try {
+    if (parseInt(req.params.id) === req.session.userId) {
+      return res.status(400).json({ error: 'Não pode apagar a si mesmo' });
+    }
+    await runAsync('DELETE FROM users WHERE id=?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao apagar usuário' });
+  }
 });
 
 // ===== START =====

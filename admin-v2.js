@@ -32,6 +32,8 @@ const sections = {
 
 const navItems = document.querySelectorAll('.sidebar-nav-item[data-section]');
 const pageTitle = document.getElementById('page-title');
+let currentUserRole = "admin";
+
 
 function showSection(name) {
   if (!sections[name]) return;
@@ -575,6 +577,11 @@ async function loadUserInfo() {
     if (user) {
       document.getElementById('user-name').textContent = user.name;
       document.getElementById('user-avatar').textContent = user.name.charAt(0).toUpperCase();
+      currentUserRole = user.role;
+      
+      if (currentUserRole !== 'admin') {
+        document.querySelectorAll('[data-role="master"]').forEach(el => el.style.display = 'none');
+      }
     }
   } catch (e) {
     window.location.href = '/login.html';
@@ -685,6 +692,7 @@ document.getElementById('client-form').addEventListener('submit', async event =>
   document.getElementById('client-form').reset();
   document.getElementById('client-form').querySelector('button[type="submit"]').textContent = 'Salvar Cliente';
   await loadClients();
+  if (currentUserRole === "admin") await loadUsers();
 });
 
 document.getElementById('adspace-form').addEventListener('submit', async event => {
@@ -1501,3 +1509,77 @@ async function init() {
 
 showSection('dashboard');
 init().catch(err => console.error(err));
+
+
+// ==========================================
+// USUÁRIOS (CRUD)
+// ==========================================
+async function loadUsers() {
+  if (currentUserRole !== 'admin') return;
+  const users = await fetchJson('/api/users');
+  const table = document.getElementById('users-table');
+  table.innerHTML = users.map(u => `
+    <tr>
+      <td>${u.name}</td>
+      <td>${u.email}</td>
+      <td><span class="badge ${u.role === 'admin' ? 'badge-info' : 'badge-default'}">${u.role === 'admin' ? 'Master' : 'Comum'}</span></td>
+      <td>${u.created_at}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="editUser(${u.id}, '${u.name.replace(/'/g, "\'")}', '${u.email}', '${u.role}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Excluir</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function editUser(id, name, email, role) {
+  document.getElementById('user-id').value = id;
+  document.getElementById('user-name-input').value = name;
+  document.getElementById('user-email-input').value = email;
+  document.getElementById('user-role-input').value = role;
+  document.getElementById('user-password-input').value = '';
+  document.getElementById('user-password-input').placeholder = 'Deixe em branco para manter a atual';
+}
+
+document.getElementById('btn-user-cancel').addEventListener('click', () => {
+  document.getElementById('user-id').value = '';
+  document.getElementById('user-form').reset();
+  document.getElementById('user-password-input').placeholder = 'Obrigatório para novo';
+});
+
+document.getElementById('user-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const id = document.getElementById('user-id').value;
+  const name = document.getElementById('user-name-input').value;
+  const email = document.getElementById('user-email-input').value;
+  const password = document.getElementById('user-password-input').value;
+  const role = document.getElementById('user-role-input').value;
+
+  const payload = { name, email, role };
+  if (password) payload.password = password;
+
+  try {
+    if (id) {
+      await fetchJson(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      if (!password) { alert('Senha obrigatória para novo usuário'); return; }
+      await fetchJson('/api/users', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    document.getElementById('user-form').reset();
+    document.getElementById('user-id').value = '';
+    loadUsers();
+  } catch (err) {
+    alert(err.message || 'Erro ao salvar usuário');
+  }
+});
+
+async function deleteUser(id) {
+  if (confirm('Tem certeza que deseja excluir este usuário?')) {
+    try {
+      await fetchJson(`/api/users/${id}`, { method: 'DELETE' });
+      loadUsers();
+    } catch (err) {
+      alert(err.message || 'Erro ao excluir');
+    }
+  }
+}
