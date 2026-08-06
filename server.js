@@ -1115,7 +1115,7 @@ app.get('/api/is-subscriber', requireAuth, async (req, res) => {
 });
 
 // ===== START =====
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 ensureAdminUser().then(async () => {
   await rssMonitor.start();
