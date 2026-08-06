@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Cliente - Paralelo Comunica</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">PC</span>
+        <span class="brand-text">Paralelo</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-section="spaces">
+          <span class="nav-icon">&#9641;</span>
+          <span>Espacos Disponiveis</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="reservations">
+          <span class="nav-icon">&#9873;</span>
+          <span>Minhas Reservas</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="myads">
+          <span class="nav-icon">&#9733;</span>
+          <span>Meus Anuncios</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="news">
+          <span class="nav-icon">&#9998;</span>
+          <span>Minhas Noticias</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="btn-logout">
+          <span class="nav-icon">&#10140;</span>
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1 id="page-title">Espaços Disponíveis</h1>
+        <div class="header-user">
+          <span id="user-name">Cliente</span>
+          <div class="user-avatar" id="user-avatar">C</div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- ESPACOS DISPONIVEIS -->
+        <section id="section-spaces" class="admin-section">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Espacos de Publicidade</h2>
+              <span class="panel-subtitle">Escolha um espaco disponivel para criar seu anuncio</span>
+            </div>
+            <div class="admin-panel-body">
+              <div class="spaces-grid" id="spaces-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MINHAS RESERVAS -->
+        <section id="section-reservations" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Minhas Reservas</h2>
+              <span class="panel-subtitle">Acompanhe suas reservas, pagamentos e envio de anuncios</span>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Espaco</th>
+                      <th>Inicio</th>
+                      <th>Fim</th>
+                      <th>Dias</th>
+                      <th>Valor</th>
+                      <th>Status</th>
+                      <th>Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reservations-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MEUS ANUNCIOS -->
+        <section id="section-myads" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Meus Anúncios Ativos</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Espaço</th>
+                      <th>Dimensões</th>
+                      <th>Status</th>
+                      <th>Início</th>
+                      <th>Fim</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="myads-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MINHAS NOTICIAS -->
+        <section id="section-news" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Nova Noticia Rapida</h2>
+              <span class="panel-subtitle">R$ 10,00 por dia (minimo 2, maximo 10 dias)</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="news-form" class="admin-form">
+                <label>Titulo
+                  <input type="text" id="title" required>
+                </label>
+                <label>Categoria
+                  <select id="category" required>
+                    <option value="">Selecione...</option>
+                    <option value="Politica">Politica</option>
+                    <option value="Economia">Economia</option>
+                    <option value="Nacional">Nacional</option>
+                    <option value="Internacional">Internacional</option>
+                    <option value="Esportes">Esportes</option>
+                    <option value="Tecnologia">Tecnologia</option>
+                    <option value="Saude">Saude</option>
+                    <option value="Entretenimento">Entretenimento</option>
+                  </select>
+                </label>
+                <label>Duracao
+                  <select id="news-duration" required>
+                    <option value="5">5 dias - R$ 50,00</option>
+                  </select>
+                </label>
+                <label class="full-width">Resumo
+                  <textarea id="description" rows="2" required></textarea>
+                </label>
+                <label class="full-width">Conteudo Completo
+                  <textarea id="full-content" rows="5" placeholder="Texto completo da noticia"></textarea>
+                </label>
+                <label>Imagem
+                  <input type="file" id="image-file" accept="image/*">
+                </label>
+                <label>Fonte
+                  <input type="text" id="source" value="Paralelo Comunica">
+                </label>
+                <div style="background:var(--bg);padding:12px;border-radius:8px;margin:8px 0;text-align:center;">
+                  <span style="font-size:0.9rem;color:var(--muted);">Valor: </span>
+                  <span style="font-size:1.2rem;font-weight:700;color:var(--accent);" id="news-price-display">R$ 50,00</span>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Enviar e Pagar</button>
+                  <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Minhas Noticias</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Titulo</th>
+                      <th>Categoria</th>
+                      <th>Status</th>
+                      <th>Pagamento</th>
+                      <th>Criado</th>
+                      <th>Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="news-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Criar anuncio ao escolher um espaco -->
+  <div id="ad-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h2 id="ad-modal-title">Criar Anuncio</h2>
+        <button class="modal-close" id="ad-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="ad-modal-space-info" class="ad-modal-space-info"></div>
+        <div id="ad-modal-dims" class="ad-dims-box"></div>
+        <form id="ad-modal-form" class="admin-form" style="margin-top:16px;">
+          <input type="hidden" id="ad-space-id">
+          <input type="hidden" id="ad-mode" value="full">
+          <label class="full-width">Titulo do Anuncio
+            <input type="text" id="ad-title" required placeholder="Ex: Promocao de Verao">
+          </label>
+          <label class="full-width">Link de Destino
+            <input type="url" id="ad-link" placeholder="https://...">
+          </label>
+          <div id="ad-mode-quick-info" class="hidden" style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:12px;">
+            <strong>Anuncio Rapido:</strong> R$ 30,00 / 7 dias. O anuncio sera ativado imediatamente apos o pagamento.
+          </div>
+          <div class="ad-type-toggle">
+            <label class="ad-type-option" id="ad-type-image-label">
+              <input type="radio" name="ad-type" value="image" checked> Imagem
+            </label>
+            <label class="ad-type-option">
+              <input type="radio" name="ad-type" value="video"> Video
+            </label>
+            <label class="ad-type-option">
+              <input type="radio" name="ad-type" value="embed"> Codigo (AdSense/HTML)
+            </label>
+          </div>
+          <div id="ad-type-image-fields">
+            <label class="full-width">Imagem do Anuncio
+              <input type="file" id="ad-image" accept="image/*">
+            </label>
+            <p class="ad-dims-hint" id="ad-dims-hint-img"></p>
+          </div>
+          <div id="ad-type-video-fields" class="hidden">
+            <label class="full-width">Video do Anuncio
+              <input type="file" id="ad-video" accept="video/*">
+            </label>
+            <p class="ad-dims-hint">Formatos aceitos: MP4, WebM, AVI.</p>
+          </div>
+          <div id="ad-type-embed-fields" class="hidden">
+            <label class="full-width">Codigo Embed / AdSense
+              <textarea id="ad-embed" rows="5" placeholder="Cole o codigo HTML ou AdSense aqui..."></textarea>
+            </label>
+            <p class="ad-dims-hint">Para AdSense: cole o codigo aqui.</p>
+          </div>
+          <label>Data Inicio
+            <input type="date" id="ad-start">
+          </label>
+          <label>Data Fim
+            <input type="date" id="ad-end">
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="ad-submit-btn">Confirmar e Publicar</button>
+            <button type="button" class="btn btn-secondary" id="ad-modal-cancel">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Reservar espaco ocupado -->
+  <div id="reserve-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h2>Reservar Espaco</h2>
+        <button class="modal-close" id="reserve-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="reserve-space-info" style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:16px;"></div>
+        <form id="reserve-form" class="admin-form">
+          <input type="hidden" id="reserve-space-id">
+          <label>Data Inicio
+            <input type="date" id="reserve-start" required>
+          </label>
+          <label>Data Fim
+            <input type="date" id="reserve-end" required>
+            <span style="font-size:0.7rem;color:var(--muted);">Minimo 7 dias, maximo 30 dias</span>
+          </label>
+          <div id="reserve-price-info" style="background:var(--accent);color:#fff;padding:12px;border-radius:8px;text-align:center;font-weight:600;margin-top:8px;display:none;"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Solicitar Reserva</button>
+            <button type="button" class="btn btn-secondary" id="reserve-modal-cancel">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Pagamento -->
+  <div id="payment-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h2>Pagamento</h2>
+        <button class="modal-close" id="payment-modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="payment-modal-body">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:0.9rem;color:var(--muted);" id="payment-desc"></div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--accent);margin:8px 0;" id="payment-amount"></div>
+          <div style="font-size:0.8rem;color:var(--muted);" id="payment-days"></div>
+        </div>
+        <div class="ad-type-toggle" style="margin-bottom:16px;">
+          <label class="ad-type-option">
+            <input type="radio" name="payment-method" value="pix" checked> PIX
+          </label>
+          <label class="ad-type-option">
+            <input type="radio" name="payment-method" value="card"> Cartao de Credito
+          </label>
+        </div>
+        <div id="payment-pix-section">
+          <div style="text-align:center;padding:20px;background:var(--bg);border-radius:8px;">
+            <p style="font-size:0.85rem;margin-bottom:12px;">Escaneie o QR Code PIX ou copie a chave:</p>
+            <div id="payment-pix-qr" style="margin-bottom:12px;"></div>
+            <div style="font-size:0.75rem;color:var(--muted);word-break:break-all;background:var(--bg-card);padding:8px;border-radius:4px;" id="payment-pix-key"></div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:8px;" id="payment-pix-name"></div>
+          </div>
+        </div>
+        <div id="payment-card-section" class="hidden">
+          <div style="padding:20px;background:var(--bg);border-radius:8px;">
+            <div class="admin-form">
+              <label class="full-width">Numero do Cartao
+                <input type="text" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19">
+              </label>
+              <label>Validade
+                <input type="text" id="card-expiry" placeholder="MM/AA" maxlength="5">
+              </label>
+              <label>CVV
+                <input type="text" id="card-cvv" placeholder="000" maxlength="4">
+              </label>
+              <label class="full-width">Nome no Cartao
+                <input type="text" id="card-name" placeholder="NOME COMPLETO">
+              </label>
+              <label class="full-width">CPF
+                <input type="text" id="card-cpf" placeholder="000.000.000-00" maxlength="14">
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:16px;">
+          <button type="button" class="btn btn-primary" id="btn-confirm-payment">Confirmar Pagamento</button>
+          <button type="button" class="btn btn-secondary" id="payment-modal-cancel">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Editar anuncio da reserva -->
+  <div id="edit-ad-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h2>Editar Anuncio</h2>
+        <button class="modal-close" id="edit-ad-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="edit-ad-space-info" class="ad-modal-space-info"></div>
+        <div id="edit-ad-dims" class="ad-dims-box"></div>
+        <form id="edit-ad-form" class="admin-form" style="margin-top:16px;">
+          <input type="hidden" id="edit-ad-id">
+          <input type="hidden" id="edit-ad-reservation-id">
+          <label class="full-width">Titulo do Anuncio
+            <input type="text" id="edit-ad-title" required placeholder="Ex: Promocao de Verao">
+          </label>
+          <label class="full-width">Link de Destino
+            <input type="url" id="edit-ad-link" placeholder="https://...">
+          </label>
+          <div class="ad-type-toggle">
+            <label class="ad-type-option">
+              <input type="radio" name="edit-ad-type" value="image" checked> Imagem
+            </label>
+            <label class="ad-type-option">
+              <input type="radio" name="edit-ad-type" value="video"> Video
+            </label>
+            <label class="ad-type-option">
+              <input type="radio" name="edit-ad-type" value="embed"> Codigo (AdSense/HTML)
+            </label>
+          </div>
+          <div id="edit-ad-type-image-fields">
+            <label class="full-width">Imagem do Anuncio
+              <input type="file" id="edit-ad-image" accept="image/*">
+            </label>
+            <p class="ad-dims-hint" id="edit-ad-dims-hint-img"></p>
+          </div>
+          <div id="edit-ad-type-video-fields" class="hidden">
+            <label class="full-width">Video do Anuncio
+              <input type="file" id="edit-ad-video" accept="video/*">
+            </label>
+            <p class="ad-dims-hint">Formatos aceitos: MP4, WebM, AVI.</p>
+          </div>
+          <div id="edit-ad-type-embed-fields" class="hidden">
+            <label class="full-width">Codigo Embed / AdSense
+              <textarea id="edit-ad-embed" rows="5" placeholder="Cole o codigo HTML ou AdSense aqui..."></textarea>
+            </label>
+            <p class="ad-dims-hint">Para AdSense: cole o codigo aqui.</p>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Anuncio</button>
+            <button type="button" class="btn btn-secondary" id="edit-ad-modal-cancel">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Pagamento Noticia -->
+  <div id="news-payment-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h2>Pagamento - Noticia Rapida</h2>
+        <button class="modal-close" id="news-payment-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:0.9rem;color:var(--muted);">Noticia Rapida - Publicacao</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--accent);margin:8px 0;" id="news-payment-amount">R$ 50,00</div>
+        </div>
+        <div class="ad-type-toggle" style="margin-bottom:16px;">
+          <label class="ad-type-option">
+            <input type="radio" name="news-payment-method" value="pix" checked> PIX
+          </label>
+          <label class="ad-type-option">
+            <input type="radio" name="news-payment-method" value="card"> Cartao de Credito
+          </label>
+        </div>
+        <div id="news-payment-pix-section">
+          <div style="text-align:center;padding:20px;background:var(--bg);border-radius:8px;">
+            <p style="font-size:0.85rem;margin-bottom:12px;">Escaneie o QR Code PIX ou copie a chave:</p>
+            <div id="news-payment-pix-qr" style="margin-bottom:12px;"></div>
+            <div style="font-size:0.75rem;color:var(--muted);word-break:break-all;background:var(--bg-card);padding:8px;border-radius:4px;" id="news-payment-pix-key"></div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:8px;" id="news-payment-pix-name"></div>
+          </div>
+        </div>
+        <div id="news-payment-card-section" class="hidden">
+          <div style="padding:20px;background:var(--bg);border-radius:8px;">
+            <div class="admin-form">
+              <label class="full-width">Numero do Cartao
+                <input type="text" id="news-card-number" placeholder="0000 0000 0000 0000" maxlength="19">
+              </label>
+              <label>Validade
+                <input type="text" id="news-card-expiry" placeholder="MM/AA" maxlength="5">
+              </label>
+              <label>CVV
+                <input type="text" id="news-card-cvv" placeholder="000" maxlength="4">
+              </label>
+              <label class="full-width">Nome no Cartao
+                <input type="text" id="news-card-name" placeholder="NOME COMPLETO">
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:16px;">
+          <button type="button" class="btn btn-primary" id="btn-confirm-news-payment">Confirmar Pagamento</button>
+          <button type="button" class="btn btn-secondary" id="news-payment-modal-cancel">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>

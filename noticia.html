@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notícia - Paralelo Comunica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .news-page {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+    .news-page .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      text-decoration: none;
+    }
+    .news-page .back-link:hover { text-decoration: underline; }
+    .news-page .news-category {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: 3px;
+      margin-bottom: 16px;
+    }
+    .news-page .news-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .news-page .news-meta {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .news-page .news-image {
+      width: 100%;
+      max-height: 450px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 28px;
+    }
+    .news-page .news-body p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .news-loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticker-bar">
+    <div class="ticker-inner">
+      <div class="ticker-item">
+        <span class="ticker-label">USD:</span>
+        <span id="ticker-usd">R$ 5,80</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-label">EUR:</span>
+        <span id="ticker-eur">R$ 6,20</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-label">IBOV:</span>
+        <span id="ticker-ibov">128.450 pts</span>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-main">
+      <a href="/" class="brand">
+        <img src="/uploads/logo.png" alt="Paralelo Comunica" class="brand-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+        <span class="brand-name" style="display:none;">PARALELO COMUNICA</span>
+      </a>
+      <div class="header-center">
+        <span class="brand-slogan">O seu portal de notícias</span>
+        <div class="header-news-ticker">
+          <span class="ticker-badge">DESTAQUES</span>
+          <div class="ticker-marquee">
+            <div class="ticker-track" id="header-news-track"></div>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="header-buttons">
+          <a href="subscribe.html" class="btn-header btn-outline" id="btn-subscribe-price">Assine</a>
+          <a href="login.html" class="btn-header" id="btn-login">Entrar</a>
+        </div>
+        <div class="header-social">
+          <a href="#" id="header-social-instagram" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </a>
+          <a href="#" id="header-social-twitter" target="_blank" rel="noopener" title="Twitter / X" aria-label="Twitter / X">
+            <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="#" id="header-social-facebook" target="_blank" rel="noopener" title="Facebook" aria-label="Facebook">
+            <svg viewBox="0 0 24 24"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.5 5H18V0h-3.808C10.592 0 9 1.583 9 4.615V8z"/></svg>
+          </a>
+          <a href="#" id="header-social-youtube" target="_blank" rel="noopener" title="YouTube" aria-label="YouTube">
+            <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+    <nav class="category-nav">
+      <ul>
+        <li><a href="/">Inicio</a></li>
+        <li><a href="/?category=Politica">Politica</a></li>
+        <li class="has-dropdown">
+          <a href="/?category=Economia">Economia <span class="arrow-down">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/?category=Economia&subcategory=Finanças">Finanças</a></li>
+            <li><a href="/?category=Economia&subcategory=Meios de Pagamentos">Meios de Pagamentos</a></li>
+          </ul>
+        </li>
+        <li><a href="/?category=Nacional">Nacional</a></li>
+        <li><a href="/?category=Internacional">Internacional</a></li>
+        <li><a href="/?category=Esportes">Esportes</a></li>
+        <li><a href="/?category=Tecnologia">Tecnologia</a></li>
+        <li><a href="/?category=Saude">Saude</a></li>
+        <li><a href="/?category=Entretenimento">Entretenimento</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="news-page">
+    <div class="ad-slot-container ad-slot-infeed" id="ad-top"></div>
+    <div id="news-content">
+      <p class="news-loading">Carregando notícia...</p>
+    </div>
+    <div class="ad-slot-container ad-slot-infeed" id="ad-bottom"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h4 id="footer-site-name">Paralelo Comunica</h4>
+        <p id="footer-site-description">O seu portal de notícias com conteúdo atualizado e reportagem 24 horas do Brasil e do Mundo.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Editorias</h4>
+        <ul id="footer-categories">
+          <li><a href="/?category=Politica">Politica</a></li>
+          <li><a href="/?category=Economia">Economia</a></li>
+          <li><a href="/?category=Esportes">Esportes</a></li>
+          <li><a href="/?category=Tecnologia">Tecnologia</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Institucional</h4>
+        <ul id="footer-institutional">
+          <li><a href="/pagina.html?page=sobre" id="footer-link-sobre">Sobre nós</a></li>
+          <li><a href="/pagina.html?page=contato" id="footer-link-contato">Contato</a></li>
+          <li><a href="/pagina.html?page=anuncie" id="footer-link-anuncie">Anuncie</a></li>
+          <li><a href="/pagina.html?page=privacidade" id="footer-link-privacidade">Política de Privacidade</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Redes Sociais</h4>
+        <ul id="footer-social">
+          <li><a href="#" id="footer-link-instagram" target="_blank">Instagram</a></li>
+          <li><a href="#" id="footer-link-twitter" target="_blank">Twitter / X</a></li>
+          <li><a href="#" id="footer-link-facebook" target="_blank">Facebook</a></li>
+          <li><a href="#" id="footer-link-youtube" target="_blank">YouTube</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom" id="footer-copyright">
+      &copy; 2026 Paralelo Comunica. Todos os direitos reservados.
+    </div>
+  </footer>
+
+  <script>
+    async function loadNewsFromServer(newsId) {
+      if (newsId) {
+        try {
+          const res = await fetch('/api/news/' + newsId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.id) return [data];
+          }
+        } catch (e) {}
+      }
+      try {
+        const res = await fetch('/api/news');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) return data;
+        }
+      } catch (e) {}
+      return [];
+    }
+
+    async function loadAdSlots() {
+      try {
+        const response = await fetch('/api/ad-spaces-public');
+        if (!response.ok) return;
+        const spaces = await response.json();
+
+        spaces.forEach(space => {
+          let container = null;
+          if (space.position === 'in-feed' || space.position === 'article-top') {
+            container = document.getElementById('ad-top');
+          } else if (space.position === 'article-bottom') {
+            container = document.getElementById('ad-bottom');
+          }
+          if (!container) return;
+
+          if (space.availability === 'occupied') {
+            container.innerHTML = renderAdHtml(space);
+            container.style.display = 'block';
+          } else {
+            container.style.display = 'none';
+          }
+        });
+      } catch (e) {}
+    }
+
+    function renderAdHtml(space) {
+      let adHtml = '';
+      if (space.ad_embed) {
+        adHtml = '<div class="ad-embed-wrap">' + space.ad_embed + '</div>';
+      } else if (space.ad_video) {
+        adHtml = '<video class="ad-video-player" src="' + space.ad_video + '" autoplay muted loop playsinline style="width:100%;height:auto;display:block;"></video>';
+      } else if (space.ad_image) {
+        var linkTag = space.ad_link ? '<a href="' + space.ad_link + '" target="_blank" rel="noopener">' : '';
+        var linkEnd = space.ad_link ? '</a>' : '';
+        adHtml = linkTag + '<img src="' + space.ad_image + '" alt="' + (space.ad_title || 'Publicidade') + '" style="width:100%;height:auto;display:block;">' + linkEnd;
+      } else {
+        adHtml = '<div class="ad-placeholder">' + (space.ad_title || 'Publicidade') + '</div>';
+      }
+      return '<div class="ad-content"><span class="ad-label">Publicidade</span>' + adHtml + '</div>';
+    }
+
+    async function init() {
+      var params = new URLSearchParams(window.location.search);
+      var newsId = Number(params.get('news'));
+
+      if (!newsId) {
+        window.location.href = '/';
+        return;
+      }
+
+      var newsItems = await loadNewsFromServer(newsId);
+      var item = newsItems.find(function(n) { return n.id === newsId; });
+
+      if (!item) {
+        document.getElementById('news-content').innerHTML = '<p class="news-loading">Notícia não encontrada. <a href="/">Voltar ao início</a></p>';
+        return;
+      }
+
+      document.title = item.title + ' - Paralelo Comunica';
+
+      var fullText = item.full_content || item.description;
+      var paragraphs = fullText.split('\n').filter(function(p) { return p.trim(); }).map(function(p) { return '<p>' + p + '</p>'; }).join('');
+
+      document.getElementById('news-content').innerHTML =
+        '<a href="/" class="back-link">&#8592; Voltar</a>' +
+        '<span class="news-category">' + item.category + '</span>' +
+        '<h1 class="news-title">' + item.title + '</h1>' +
+        '<div class="news-meta"><span>' + item.source + '</span> &middot; <span>' + (item.datetime || item.created_at || '') + '</span></div>' +
+        (item.video_url
+          ? '<iframe src="' + item.video_url + '" frameborder="0" allowfullscreen style="width:100%;height:450px;border-radius:8px;margin-bottom:28px;"></iframe>'
+          : '<img class="news-image" src="' + (item.image_url || item.image) + '" alt="' + item.title + '">') +
+        '<div class="news-body">' + paragraphs + '</div>';
+
+      await loadAdSlots();
+    }
+
+    init();
+  </script>
+  <script>
+    function renderHeaderNewsTicker(newsList) {
+      const track = document.getElementById('header-news-track');
+      if (!track || !newsList || newsList.length === 0) return;
+      const items = newsList.slice(0, 8);
+      const html = items.map(item => `
+        <a href="/noticia.html?news=${item.id}" target="_blank">
+          <span class="ticker-track-dot">&#9679;</span>
+          <span>${item.title}</span>
+        </a>
+      `).join('');
+      track.innerHTML = html + html;
+    }
+    fetch('/api/news').then(r=>r.json()).then(d=>renderHeaderNewsTicker(d)).catch(()=>{});
+
+    fetch('/api/subscription-price').then(r=>r.json()).then(d=>{
+      const btn = document.getElementById('btn-subscribe-price');
+      if(btn) btn.textContent = 'Assine ' + d.price_reais + '/mês';
+    }).catch(()=>{});
+
+    fetch('/api/site-config').then(r=>r.json()).then(cfg=>{
+      window.siteConfig = cfg;
+      if(cfg.site_slogan) {
+        const sloganEl = document.querySelector('.brand-slogan');
+        if(sloganEl) sloganEl.textContent = cfg.site_slogan;
+      }
+      if(cfg.site_name) document.getElementById('footer-site-name').textContent = cfg.site_name;
+      if(cfg.site_description) document.getElementById('footer-site-description').textContent = cfg.site_description;
+      if(cfg.footer_categories) {
+        const cats = cfg.footer_categories.split(',').map(c=>c.trim()).filter(Boolean);
+        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+c+'">'+c+'</a></li>').join('');
+      }
+      if(cfg.copyright) document.getElementById('footer-copyright').innerHTML = '&copy; ' + cfg.copyright;
+      function setLink(id, val) {
+        const el = document.getElementById(id);
+        if(!el || !val) return;
+        if(val.startsWith('http') || val.startsWith('/')) { el.href = val; }
+        else { el.textContent = val; }
+      }
+      function setSocialLink(id, val) {
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(val && val !== '#') {
+          el.href = val.startsWith('http') ? val : 'https://' + val;
+        } else {
+          el.href = '#';
+        }
+      }
+      setSocialLink('header-social-instagram', cfg.social_instagram);
+      setSocialLink('header-social-twitter', cfg.social_twitter);
+      setSocialLink('header-social-facebook', cfg.social_facebook);
+      setSocialLink('header-social-youtube', cfg.social_youtube);
+      setSocialLink('footer-link-instagram', cfg.social_instagram);
+      setSocialLink('footer-link-twitter', cfg.social_twitter);
+      setSocialLink('footer-link-facebook', cfg.social_facebook);
+      setSocialLink('footer-link-youtube', cfg.social_youtube);
+      setLink('footer-link-sobre', cfg.inst_sobre);
+      setLink('footer-link-contato', cfg.inst_contato);
+      setLink('footer-link-anuncie', cfg.inst_anuncie);
+      setLink('footer-link-privacidade', cfg.inst_privacidade);
+    }).catch(()=>{});
+  </script>
+
+  <!-- MODAL AO VIVO -->
+  <div id="live-modal" class="hidden">
+    <div class="modal-overlay" id="live-modal-overlay"></div>
+    <div class="modal-content" style="max-width:860px;width:95%;">
+      <div class="modal-header">
+        <h2 style="display:flex;align-items:center;gap:8px;font-size:1.1rem;margin:0;color:#fff;">
+          <span class="live-dot-pulse">🔴</span>
+          <span id="live-title-text">Transmissão Ao Vivo</span>
+        </h2>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <a id="live-open-tab-btn" href="#" target="_blank" rel="noopener"
+             style="display:none;align-items:center;gap:5px;font-size:0.78rem;color:rgba(255,255,255,0.75);text-decoration:none;border:1px solid rgba(255,255,255,0.25);padding:4px 10px;border-radius:20px;"
+             onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.6)'"
+             onmouseout="this.style.color='rgba(255,255,255,0.75)';this.style.borderColor='rgba(255,255,255,0.25)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Abrir em nova aba
+          </a>
+          <button id="close-live-modal" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.8rem;cursor:pointer;line-height:1;padding:0;"
+                  onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">&times;</button>
+        </div>
+      </div>
+      <div id="live-player-container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000;"></div>
+    </div>
+  </div>
+  <script src="live-modal.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+services:
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: evolution_api
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./evolution_data:/evolution/instances
+    environment:
+      - SERVER_URL=http://localhost:8080
+      - AUTHENTICATION_API_KEY=paralelo2026
+      - AUTHENTICATION_TYPE=apikey
+      - CONFIG_SYNC=true
+      - DATABASE_ENABLED=true
+      - DATABASE_CONNECTION_URI=sqlite:///evolution/database.sqlite
+      - DEL_INSTANCE=false
+      - WEBHOOK_ENABLED=false
+      - QRCODE_LIMIT=30
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

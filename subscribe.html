@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assinatura - Paralelo Comunica</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f0f2f5; color: #1a1a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .sub-container { width: 100%; max-width: 480px; }
+    .sub-brand { text-align: center; margin-bottom: 24px; }
+    .sub-brand .logo { display: inline-block; background: #0056b3; color: #fff; font-weight: 900; font-size: 1.2rem; padding: 6px 16px; letter-spacing: 0.08em; border-radius: 4px; }
+    .sub-card { background: #fff; border: 1px solid #e0e0e0; padding: 32px; text-align: center; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .sub-card h2 { font-size: 1.3rem; margin-bottom: 8px; }
+    .sub-price { font-size: 2.5rem; font-weight: 900; color: #0056b3; margin: 16px 0; }
+    .sub-price span { font-size: 1rem; font-weight: 400; color: #666; }
+    .sub-features { text-align: left; margin: 20px 0; padding: 16px; background: #f8f9fa; border-radius: 8px; }
+    .sub-features li { padding: 6px 0; font-size: 0.9rem; color: #444; list-style: none; }
+    .sub-features li::before { content: "✓ "; color: #0056b3; font-weight: 700; }
+    .sub-toggle { display: flex; gap: 0; margin: 20px 0; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }
+    .sub-toggle button { flex: 1; padding: 10px; border: none; background: #f8f9fa; color: #666; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .sub-toggle button.active { background: #0056b3; color: #fff; }
+    .sub-btn { width: 100%; padding: 14px; background: #0056b3; color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 12px; transition: background 0.15s; }
+    .sub-btn:hover { background: #003d80; }
+    .sub-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .error-msg { color: #dc3545; font-size: 0.85rem; min-height: 1.2rem; margin-top: 12px; }
+    .success-msg { color: #28a745; font-size: 0.85rem; margin-top: 12px; }
+    .sub-login { text-align: center; margin-top: 16px; font-size: 0.85rem; }
+    .sub-login a { color: #0056b3; text-decoration: none; }
+    .sub-back { text-align: center; margin-top: 20px; }
+    .sub-back a { color: #666; font-size: 0.82rem; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="sub-container">
+    <div class="sub-brand">
+      <a href="/" style="text-decoration:none;"><span class="logo">PARALELO COMUNICA</span></a>
+    </div>
+    <div class="sub-card" id="sub-form-card">
+      <h2>Assine o Paralelo Comunica</h2>
+      <p style="color:#666;font-size:0.9rem;">Acesso completo sem anuncios</p>
+      <div class="sub-price" id="sub-price-display">R$ 3,99<span>/mês</span></div>
+      <ul class="sub-features">
+        <li>Noticias sem interrupcao</li>
+        <li>Conteudo exclusivo</li>
+        <li>Sem anuncios em destaque</li>
+        <li>Suporte prioritario</li>
+      </ul>
+      <div id="sub-logged-out">
+        <p style="margin-bottom:12px;font-size:0.9rem;">Faca login para assinar</p>
+        <a href="login.html" class="sub-btn" style="display:inline-block;text-decoration:none;text-align:center;">Fazer Login</a>
+      </div>
+      <div id="sub-logged-in" style="display:none;">
+        <div class="sub-toggle">
+          <button class="active" id="sub-method-pix" type="button">PIX</button>
+          <button id="sub-method-card" type="button">Cartao</button>
+        </div>
+        <div id="sub-pix-info" style="background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:12px;">
+          <p style="font-size:0.85rem;color:#666;margin-bottom:8px;">Chave PIX para pagamento:</p>
+          <p id="sub-pix-key" style="font-weight:700;word-break:break-all;">Carregando...</p>
+          <p id="sub-pix-name" style="font-size:0.8rem;color:#999;margin-top:4px;"></p>
+        </div>
+        <div id="sub-card-info" style="display:none;background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:12px;">
+          <div style="text-align:left;">
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Numero do Cartao</label>
+            <input type="text" placeholder="0000 0000 0000 0000" maxlength="19" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:8px;font-size:0.85rem;">
+            <div style="display:flex;gap:8px;">
+              <input type="text" placeholder="MM/AA" maxlength="5" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:0.85rem;">
+              <input type="text" placeholder="CVV" maxlength="4" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:0.85rem;">
+            </div>
+          </div>
+        </div>
+        <button class="sub-btn" id="btn-subscribe">Assinar Agora</button>
+        <p class="error-msg" id="sub-error"></p>
+        <p class="success-msg" id="sub-success" style="display:none;"></p>
+      </div>
+    </div>
+    <div class="sub-back"><a href="/">← Voltar ao site</a></div>
+  </div>
+  <script>
+    const subMethodPix = document.getElementById('sub-method-pix');
+    const subMethodCard = document.getElementById('sub-method-card');
+    const subPixInfo = document.getElementById('sub-pix-info');
+    const subCardInfo = document.getElementById('sub-card-info');
+    subMethodPix.addEventListener('click', () => { subMethodPix.classList.add('active'); subMethodCard.classList.remove('active'); subPixInfo.style.display=''; subCardInfo.style.display='none'; });
+    subMethodCard.addEventListener('click', () => { subMethodCard.classList.add('active'); subMethodPix.classList.remove('active'); subCardInfo.style.display=''; subPixInfo.style.display='none'; });
+
+    fetch('/api/subscription-price').then(r=>r.json()).then(d=>{
+      document.getElementById('sub-price-display').innerHTML = d.price_reais + '<span>/mês</span>';
+      document.getElementById('btn-subscribe').textContent = 'Assinar Agora - ' + d.price_reais;
+    }).catch(()=>{});
+
+    async function checkLogin() {
+      try {
+        const res = await fetch('/api/me');
+        if (res.ok) {
+          const user = await res.json();
+          if (user) {
+            document.getElementById('sub-logged-out').style.display = 'none';
+            document.getElementById('sub-logged-in').style.display = '';
+            loadPixConfig();
+          }
+        }
+      } catch(e) {}
+    }
+
+    async function loadPixConfig() {
+      try {
+        const res = await fetch('/api/payment-config');
+        const cfg = await res.json();
+        document.getElementById('sub-pix-key').textContent = cfg.pix_key || 'Chave nao configurada';
+        document.getElementById('sub-pix-name').textContent = cfg.pix_name ? 'Titular: ' + cfg.pix_name : '';
+      } catch(e) {}
+    }
+
+    document.getElementById('btn-subscribe').addEventListener('click', async () => {
+      const method = subMethodPix.classList.contains('active') ? 'pix' : 'card';
+      const errEl = document.getElementById('sub-error');
+      const successEl = document.getElementById('sub-success');
+      errEl.textContent = '';
+      successEl.style.display = 'none';
+      try {
+        const res = await fetch('/api/client/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_method: method }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao assinar');
+        successEl.textContent = 'Assinatura realizada com sucesso! Expira em: ' + data.expires_at;
+        successEl.style.display = '';
+        document.getElementById('btn-subscribe').disabled = true;
+        document.getElementById('btn-subscribe').textContent = 'Assinatura Ativa!';
+      } catch(e) {
+        errEl.textContent = e.message;
+      }
+    });
+
+    checkLogin();
+  </script>
+</body>
+</html>
