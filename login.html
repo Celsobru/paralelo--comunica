@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Paralelo Comunica</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-container { width: 100%; max-width: 400px; }
+    .login-brand { text-align: center; margin-bottom: 24px; }
+    .login-brand .logo {
+      display: inline-block; background: #0066ff; color: #fff;
+      font-weight: 900; font-size: 1.2rem; padding: 6px 16px; letter-spacing: 0.08em;
+    }
+    .login-brand h1 { margin-top: 12px; font-size: 1.3rem; font-weight: 700; }
+    .login-brand p { color: #666; font-size: 0.88rem; margin-top: 4px; }
+    .login-card { background: #fff; border: 1px solid #e0e0e0; padding: 32px; }
+    .login-card h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 20px; }
+    .login-toggle {
+      display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #e0e0e0; overflow: hidden;
+    }
+    .login-toggle button {
+      flex: 1; padding: 10px; border: none; background: #f8f9fa; color: #666;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+      font-family: inherit;
+    }
+    .login-toggle button.active {
+      background: #0066ff; color: #fff;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: #666; margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 4px;
+      background: #f8f9fa; font-size: 0.9rem; font-family: inherit; color: #1a1a1a;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus { outline: none; border-color: #0066ff; }
+    .login-btn {
+      width: 100%; padding: 12px; background: #0066ff; color: #fff; border: none;
+      border-radius: 4px; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: background 0.15s; margin-top: 4px;
+    }
+    .login-btn:hover { background: #0044cc; }
+    .error-message {
+      color: #dc3545; font-size: 0.85rem; min-height: 1.2rem;
+      margin-top: 12px; text-align: center;
+    }
+    .login-help { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #999; }
+    .login-footer { text-align: center; margin-top: 24px; font-size: 0.78rem; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-brand">
+      <span class="logo">PC</span>
+      <h1>Paralelo Comunica</h1>
+      <p>Painel de Controle</p>
+    </div>
+    <div class="login-card">
+      <h2>Entrar</h2>
+      <div class="login-toggle">
+        <button class="active" id="toggle-admin" type="button">Administrador</button>
+        <button id="toggle-client" type="button">Cliente</button>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input type="password" id="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="login-btn" id="login-btn">Entrar</button>
+      </form>
+      <p class="error-message" id="login-error"></p>
+      <p class="login-help" id="login-help">Admin: admin@paralelo.com.br / admin123</p>
+      <p style="text-align:center;margin-top:12px;font-size:0.82rem;"><a href="#" id="show-forgot" style="color:#cc0000;">Esqueci minha senha</a></p>
+      <div id="forgot-section" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;">
+        <h3 style="font-size:0.95rem;margin-bottom:12px;">Redefinir Senha</h3>
+        <div class="form-group">
+          <label>Email cadastrado</label>
+          <input type="email" id="reset-email" placeholder="Seu email">
+        </div>
+        <button type="button" class="login-btn" id="btn-send-reset">Enviar Link de Redefinicao</button>
+        <p class="error-message" id="reset-message"></p>
+        <p style="font-size:0.75rem;color:#999;margin-top:8px;text-align:center;">
+          <a href="#" id="back-to-login" style="color:#cc0000;">Voltar ao Login</a>
+        </p>
+      </div>
+    </div>
+    <p class="login-footer">&copy; 2026 Paralelo Comunica</p>
+  </div>
+  <script src="login.js"></script>
+</body>
+</html>

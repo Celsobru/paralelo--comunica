@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Paralelo Comunica</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="admin-panel">
+    <h1>Painel Admin</h1>
+    <form id="news-form">
+      <label>Título
+        <input type="text" id="title" required>
+      </label>
+      <label>Categoria
+        <input type="text" id="category" required>
+      </label>
+      <label>Descrição
+        <textarea id="description" rows="4" required></textarea>
+      </label>
+      <label>Imagem (URL)
+        <input type="url" id="image" required>
+      </label>
+      <label>Fonte
+        <input type="text" id="source" required>
+      </label>
+      <label>Data/hora
+        <input type="text" id="datetime" placeholder="há 5 minutos" required>
+      </label>
+      <button type="submit">Salvar notícia</button>
+    </form>
+    <section>
+      <h2>Notícias cadastradas</h2>
+      <div id="admin-list"></div>
+    </section>
+  </main>
+  <script src="admin.js"></script>
+</body>
+</html>

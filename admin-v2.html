@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin - Paralelo Comunica</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">PC</span>
+        <span class="brand-text">Paralelo</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-section="dashboard">
+          <span class="nav-icon">&#9632;</span>
+          <span>Dashboard</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="news">
+          <span class="nav-icon">&#9998;</span>
+          <span>Notícias</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="clients">
+          <span class="nav-icon">&#9823;</span>
+          <span>Clientes</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="adspaces">
+          <span class="nav-icon">&#9641;</span>
+          <span>Espaços Anúncio</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="ads">
+          <span class="nav-icon">&#9733;</span>
+          <span>Anúncios</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="notifications">
+          <span class="nav-icon">&#9993;</span>
+          <span>Notificações</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="rssmonitor">
+          <span class="nav-icon">&#9729;</span>
+          <span>RSS Monitor</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="payments">
+          <span class="nav-icon">&#9830;</span>
+          <span>Pagamento</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="reservations">
+          <span class="nav-icon">&#9873;</span>
+          <span>Reservas</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="newsconfig">
+          <span class="nav-icon">&#9998;</span>
+          <span>Noticias</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="siteconfig">
+          <span class="nav-icon">&#9881;</span>
+          <span>Site</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="pages">
+          <span class="nav-icon">&#9998;</span>
+          <span>Páginas</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="subscribers">
+          <span class="nav-icon">&#9733;</span>
+          <span>Assinantes</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="btn-logout">
+          <span class="nav-icon">&#10140;</span>
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1 id="page-title">Dashboard</h1>
+        <div class="header-user">
+          <span id="user-name">Admin</span>
+          <div class="user-avatar" id="user-avatar">A</div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- DASHBOARD -->
+        <section id="section-dashboard" class="admin-section">
+          <div class="stats-grid" id="stats-grid"></div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Mapa de Posicoes do Site</h2>
+              <span class="panel-subtitle">Cada bloco numerado = 1 posicao. Clique &#9998; para alterar preco.</span>
+            </div>
+            <div class="admin-panel-body">
+              <div class="site-map" id="site-map"></div>
+              <div class="wm-legend">
+                <span class="wm-legend-item"><span class="wm-num" style="background:var(--success);">N</span> = Campo N</span>
+                <span class="wm-legend-item wm-legend-available">&#10003; Disponivel</span>
+                <span class="wm-legend-item wm-legend-occupied">&#10007; Ocupado</span>
+              </div>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Todos os Espaços</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Posição</th>
+                      <th>Tamanho</th>
+                      <th>Preço</th>
+                      <th>Status</th>
+                      <th>Ocupado por</th>
+                      <th>Expira em</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-spaces-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Contadores do Site</h2>
+              <span class="panel-subtitle">Valores exibidos na barra superior do portal</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="stats-form" class="admin-form" style="grid-template-columns: 1fr 1fr auto;">
+                <label>Total de Visitas
+                  <input type="number" id="stats-visitors" min="0" required placeholder="Ex: 12847">
+                </label>
+                <label>Max. Online (randomiza 5%-100%)
+                  <input type="number" id="stats-online" min="0" required placeholder="Ex: 340">
+                </label>
+                <div class="form-actions" style="align-self:end;">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+              </form>
+              <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;">O campo "Max. Online" define o valor maximo. O site exibe um valor aleatorio entre 5% e 100% desse numero, atualizando a cada ~5 segundos para parecer real.</p>
+            </div>
+          </div>
+        </section>
+        <section id="section-news" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Nova Notícia</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="news-form" class="admin-form">
+                <label>Título
+                  <input type="text" id="title" required>
+                </label>
+                <label>Categoria
+                  <select id="category" required>
+                    <option value="">Selecione...</option>
+                    <option value="Política">Política</option>
+                    <option value="Economia">Economia</option>
+                    <option value="Nacional">Nacional</option>
+                    <option value="Internacional">Internacional</option>
+                    <option value="Esportes">Esportes</option>
+                    <option value="Tecnologia">Tecnologia</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Entretenimento">Entretenimento</option>
+                  </select>
+                </label>
+                <label id="subcategory-wrap" style="display:none;">Subcategoria (Economia)
+                  <select id="subcategory">
+                    <option value="">Nenhuma (Geral)</option>
+                    <option value="Finanças">Finanças</option>
+                    <option value="Meios de Pagamentos">Meios de Pagamentos</option>
+                  </select>
+                </label>
+                <label>Espaço de Anúncio
+                  <select id="news-ad-space">
+                    <option value="">Nenhum (Notícia normal)</option>
+                  </select>
+                </label>
+                <label>Data/hora
+                  <input type="text" id="datetime" placeholder="Ex: há 5 minutos">
+                </label>
+                <label class="full-width">Resumo
+                  <textarea id="description" rows="2" required></textarea>
+                </label>
+                <label class="full-width">Conteúdo Completo
+                  <textarea id="full-content" rows="5" placeholder="Texto completo da notícia (abre ao clicar no card)"></textarea>
+                </label>
+                <label>Imagem
+                  <input type="file" id="image-file" accept="image/*">
+                </label>
+                <label>Video (arquivo)
+                  <input type="file" id="news-video-file" accept="video/*">
+                </label>
+                <label>Video (link YouTube/CNN)
+                  <input type="url" id="news-video-link" placeholder="https://youtube.com/watch?v=... ou https://cnn.com/video/...">
+                </label>
+                <label>Fonte
+                  <input type="text" id="source">
+                </label>
+                <label>Status
+                  <select id="status">
+                    <option value="published">Publicado</option>
+                    <option value="draft">Rascunho</option>
+                  </select>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar Notícia</button>
+                  <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Notícias Cadastradas</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Categoria</th>
+                      <th>Status</th>
+                      <th>Criado</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="news-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CLIENTES -->
+        <section id="section-clients" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Novo Cliente</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="client-form" class="admin-form">
+                <label>Nome
+                  <input type="text" id="client-name" required>
+                </label>
+                <label>Email
+                  <input type="email" id="client-email" required>
+                </label>
+                <label>Senha
+                  <input type="password" id="client-password">
+                </label>
+                <label>Empresa
+                  <input type="text" id="client-company">
+                </label>
+                <label>Telefone
+                  <input type="text" id="client-phone">
+                </label>
+                <label>Site
+                  <input type="url" id="client-website">
+                </label>
+                <label class="full-width">Observações
+                  <textarea id="client-notes" rows="3"></textarea>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+                  <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Clientes Cadastrados</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Email</th>
+                      <th>Empresa</th>
+                      <th>Telefone</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="clients-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ESPACOS DE ANUNCIO -->
+        <section id="section-adspaces" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Novo Espaço</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="adspace-form" class="admin-form">
+                <label>Nome
+                  <input type="text" id="adspace-name" required>
+                </label>
+                <label>Posição
+                  <select id="adspace-position" required>
+                    <option value="header">Banner Topo</option>
+                    <option value="sidebar-top">Sidebar Superior</option>
+                    <option value="sidebar-bottom">Sidebar Inferior</option>
+                    <option value="in-feed">Entre Matérias</option>
+                    <option value="article-top">Acima da Matéria</option>
+                    <option value="article-bottom">Abaixo da Matéria</option>
+                    <option value="footer">Rodapé</option>
+                  </select>
+                </label>
+                <label class="full-width">Descrição
+                  <textarea id="adspace-description" rows="3"></textarea>
+                </label>
+                <label>Preço (centavos)
+                  <input type="number" id="adspace-price" required>
+                </label>
+                <label>Largura
+                  <input type="text" id="adspace-width">
+                </label>
+                <label>Altura
+                  <input type="text" id="adspace-height">
+                </label>
+                <label>Status
+                  <select id="adspace-active">
+                    <option value="1">Ativo</option>
+                    <option value="0">Inativo</option>
+                  </select>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar Espaço</button>
+                  <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Espaços Cadastrados</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Posição</th>
+                      <th>Preço</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adspaces-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ANUNCIOS -->
+        <section id="section-ads" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Novo Anuncio</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="ad-form" class="admin-form">
+                <label>Cliente
+                  <select id="ad-client"></select>
+                </label>
+                <label>Espaco
+                  <select id="ad-space"></select>
+                </label>
+                <label>Titulo
+                  <input type="text" id="ad-title" required>
+                </label>
+                <label>Link
+                  <input type="url" id="ad-link">
+                </label>
+                <div class="full-width" id="admin-ad-dims-info"></div>
+                <div class="ad-type-toggle">
+                  <label class="ad-type-option">
+                    <input type="radio" name="admin-ad-type" value="image" checked> Imagem
+                  </label>
+                  <label class="ad-type-option">
+                    <input type="radio" name="admin-ad-type" value="video"> Video
+                  </label>
+                  <label class="ad-type-option">
+                    <input type="radio" name="admin-ad-type" value="embed"> Codigo (AdSense/HTML)
+                  </label>
+                </div>
+                <div id="admin-ad-image-fields">
+                  <label class="full-width">Imagem
+                    <input type="file" id="ad-image" accept="image/*">
+                  </label>
+                  <p class="ad-dims-hint" id="admin-ad-dims-hint">Selecione o espaco acima para ver o tamanho recomendado.</p>
+                </div>
+                <div id="admin-ad-video-fields" class="hidden">
+                  <label class="full-width">Video
+                    <input type="file" id="ad-video" accept="video/*">
+                  </label>
+                  <p class="ad-dims-hint">Formatos aceitos: MP4, WebM, AVI.</p>
+                </div>
+                <div id="admin-ad-embed-fields" class="hidden">
+                  <label class="full-width">Codigo Embed / AdSense
+                    <textarea id="ad-embed" rows="5" placeholder="Cole o codigo HTML ou AdSense aqui..."></textarea>
+                  </label>
+                  <p class="ad-dims-hint">Para AdSense: va em google.com/adsense, crie uma unidade de anuncio, e cole o codigo aqui.</p>
+                </div>
+                <label>Inicio
+                  <input type="date" id="ad-start">
+                </label>
+                <label>Fim
+                  <input type="date" id="ad-end">
+                </label>
+                <label>Status
+                  <select id="ad-status">
+                    <option value="active">Ativo</option>
+                    <option value="paused">Pausado</option>
+                  </select>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar Anuncio</button>
+                  <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Anúncios Cadastrados</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Cliente</th>
+                      <th>Espaço</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ads-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RSS MONITOR -->
+        <section id="section-rssmonitor" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>WhatsApp</h2>
+              <span class="panel-subtitle">Conecte seu WhatsApp para receber alertas das noticias</span>
+            </div>
+            <div class="admin-panel-body">
+              <div id="whatsapp-status-area" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 0;">
+                <div id="whatsapp-status-text" style="font-size:1rem;color:var(--muted);">Inicializando...</div>
+                <div id="whatsapp-qr-container" style="display:none;">
+                  <img id="whatsapp-qr-img" style="width:220px;height:220px;image-rendering:pixelated;border:3px solid var(--border);border-radius:8px;" alt="QR Code">
+                  <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">Escaneie com o WhatsApp</p>
+                </div>
+                <div id="whatsapp-connected-info" style="display:none;text-align:center;">
+                  <div style="font-size:3rem;color:var(--success);margin-bottom:8px;">&#10003;</div>
+                  <div style="font-size:1.1rem;font-weight:600;">WhatsApp Conectado</div>
+                  <div id="whatsapp-phone-display" style="font-size:0.85rem;color:var(--muted);"></div>
+                </div>
+                <button id="btn-whatsapp-disconnect" class="btn btn-secondary" style="display:none;font-size:0.8rem;">Desconectar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Configuração</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="rss-config-form" class="admin-form">
+                <label>Telefone para receber alertas
+                  <input type="text" id="rss-whatsapp-phone" placeholder="5511999999999" required>
+                  <span style="font-size:0.7rem;color:var(--muted);">Seu numero com codigo do pais (55) + DDD + numero. Ex: 5511999999999</span>
+                </label>
+                <label>Intervalo entre verificacoes (minutos)
+                  <input type="number" id="rss-interval" min="1" value="10" required>
+                </label>
+                <label style="flex-direction:row; gap:8px; align-items:center;">
+                  <input type="checkbox" id="rss-whatsapp-active" style="width:auto;">
+                  Enviar alertas no WhatsApp
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                  <button type="button" id="btn-test-whatsapp" class="btn btn-secondary">Testar WhatsApp</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Fontes RSS</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="rss-source-form" class="admin-form" style="grid-template-columns:1fr 2fr auto;">
+                <label>Nome
+                  <input type="text" id="rss-source-name" placeholder="G1" required>
+                </label>
+                <label>URL do Feed RSS
+                  <input type="url" id="rss-source-url" placeholder="https://g1.globo.com/rss/g1/" required>
+                  <span style="font-size:0.7rem;color:var(--muted);">Cole o link do FEED RSS, NAO o link do site. Ex: g1.globo.com/rss/g1/</span>
+                </label>
+                <div class="form-actions" style="align-self:end;">
+                  <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+              </form>
+              <details style="margin-top:8px;font-size:0.8rem;">
+                <summary style="cursor:pointer;color:var(--accent);">Feeds RSS sugeridos</summary>
+                <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+                  <code style="font-size:0.75rem;padding:4px 8px;background:var(--bg);border-radius:4px;cursor:pointer;" onclick="document.getElementById('rss-source-url').value=this.textContent;document.getElementById('rss-source-name').value='G1'">https://g1.globo.com/rss/g1/</code>
+                  <code style="font-size:0.75rem;padding:4px 8px;background:var(--bg);border-radius:4px;cursor:pointer;" onclick="document.getElementById('rss-source-url').value=this.textContent;document.getElementById('rss-source-name').value='CNN Brasil'">https://www.cnnbrasil.com.br/feed/</code>
+                  <code style="font-size:0.75rem;padding:4px 8px;background:var(--bg);border-radius:4px;cursor:pointer;" onclick="document.getElementById('rss-source-url').value=this.textContent;document.getElementById('rss-source-name').value='UOL'">https://rss.uol.com.br/feed/noticias.xml</code>
+                  <code style="font-size:0.75rem;padding:4px 8px;background:var(--bg);border-radius:4px;cursor:pointer;" onclick="document.getElementById('rss-source-url').value=this.textContent;document.getElementById('rss-source-name').value='R7'">https://noticias.r7.com/feed.xml</code>
+                </div>
+              </details>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Feed URL</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rss-sources-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Palavras-Chave</h2>
+              <span class="panel-subtitle">Se vazio, TODAS as noticias serao alertadas</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="rss-keyword-form" class="admin-form" style="grid-template-columns:1fr auto;">
+                <label>Palavra-chave
+                  <input type="text" id="rss-keyword-input" placeholder="politica" required>
+                </label>
+                <div class="form-actions" style="align-self:end;">
+                  <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+              </form>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Palavra</th>
+                      <th>Ativa</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rss-keywords-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Últimas Notícias Encontradas</h2>
+              <div>
+                <button type="button" id="btn-check-now" class="btn btn-primary" style="font-size:0.75rem;">Verificar Agora</button>
+                <button type="button" id="btn-clear-articles" class="btn btn-secondary" style="font-size:0.75rem;">Limpar</button>
+              </div>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Fonte</th>
+                      <th>Título</th>
+                      <th>Palavras</th>
+                      <th>Encontrado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rss-articles-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- NOTIFICACOES -->
+        <section id="section-notifications" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Nova Notificação</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="notification-form" class="admin-form">
+                <label>Título
+                  <input type="text" id="notification-title" required>
+                </label>
+                <label>Público
+                  <select id="notification-audience">
+                    <option value="all">Todos</option>
+                    <option value="subscribers">Assinantes</option>
+                    <option value="clients">Clientes</option>
+                  </select>
+                </label>
+                <label class="full-width">Mensagem
+                  <textarea id="notification-message" rows="4" required></textarea>
+                </label>
+                <label style="flex-direction:row; gap:8px; align-items:center;">
+                  <input type="checkbox" id="notification-send-now" style="width:auto;">
+                  Enviar agora
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar Notificação</button>
+                  <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Notificações Enviadas</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Público</th>
+                      <th>Status</th>
+                      <th>Enviado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="notifications-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- PAGAMENTO -->
+        <section id="section-payments" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Configuracao de Pagamento</h2>
+              <span class="panel-subtitle">Dados exibidos para clientes na tela de pagamento</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="payment-config-form" class="admin-form">
+                <label>Chave PIX
+                  <input type="text" id="cfg-pix-key" placeholder="CPF, e-mail, telefone ou aleatoria">
+                </label>
+                <label>Nome no PIX
+                  <input type="text" id="cfg-pix-name" placeholder="Titular da chave">
+                </label>
+                <label>Cidade (PIX)
+                  <input type="text" id="cfg-pix-city" placeholder="SAO PAULO">
+                </label>
+                <label>Nome do Banco
+                  <input type="text" id="cfg-bank-name" placeholder="Ex: Banco do Brasil">
+                </label>
+                <label>Agencia
+                  <input type="text" id="cfg-bank-agency" placeholder="0000-0">
+                </label>
+                <label>Conta
+                  <input type="text" id="cfg-bank-account" placeholder="00000-0">
+                </label>
+                <label>CPF/CNPJ
+                  <input type="text" id="cfg-bank-cpf" placeholder="000.000.000-00">
+                </label>
+                <label>Nome da Empresa
+                  <input type="text" id="cfg-company-name" placeholder="Razao Social">
+                </label>
+                <label>Valor da Assinatura (R$)
+                  <input type="number" id="cfg-subscription-price" min="0" step="0.01" placeholder="3,99">
+                  <span style="font-size:0.7rem;color:var(--muted);" id="cfg-subscription-price-preview"></span>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+        <!-- RESERVAS -->
+        <section id="section-reservations" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Pedidos de Reserva</h2>
+              <span class="panel-subtitle">Reservas pendentes e aprovadas</span>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Cliente</th>
+                      <th>Espaco</th>
+                      <th>Inicio</th>
+                      <th>Fim</th>
+                      <th>Dias</th>
+                      <th>Valor</th>
+                      <th>Status</th>
+                      <th>Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reservations-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- CONFIG NOTICIAS -->
+        <section id="section-newsconfig" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Configuracao de Noticias do Cliente</h2>
+              <span class="panel-subtitle">Defina valores e prazos para noticias rapidas</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="news-config-form" class="admin-form" style="grid-template-columns: 1fr 1fr 1fr auto;">
+                <label>Preco por Dia (centavos)
+                  <input type="number" id="nc-price-per-day" required min="0" placeholder="0 = Gratuito">
+                  <span style="font-size:0.7rem;color:var(--muted);" id="nc-price-preview"></span>
+                </label>
+                <label>Dias Minimos
+                  <input type="number" id="nc-min-days" required min="1" max="30" placeholder="Ex: 2">
+                </label>
+                <label>Dias Maximos
+                  <input type="number" id="nc-max-days" required min="1" max="30" placeholder="Ex: 10">
+                </label>
+                <div class="form-actions" style="align-self:end;">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+              </form>
+              <div style="background:var(--bg);padding:12px;border-radius:8px;margin-top:12px;font-size:0.85rem;color:var(--muted);">
+                <strong>Exemplo:</strong> Se o preco por dia for R$10,00 e o prazo de 2 a 10 dias, o cliente paga de R$20,00 a R$100,00 pela noticia.
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- CONFIGURAÇÕES DO SITE -->
+        <section id="section-siteconfig" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Configurações do Site</h2>
+              <span class="panel-subtitle">Edite informações do rodapé, redes sociais e links institucionais</span>
+            </div>
+            <div class="admin-panel-body">
+              <form id="site-config-form" class="admin-form" style="grid-template-columns: 1fr 1fr;">
+                <label style="grid-column: 1 / -1;">Nome do Site
+                  <input type="text" id="sc-site-name" placeholder="Paralelo Comunica">
+                </label>
+                <label style="grid-column: 1 / -1;">Frase ao lado do Logo (Slogan)
+                  <input type="text" id="sc-site-slogan" placeholder="O seu portal de notícias">
+                </label>
+                <label style="grid-column: 1 / -1;">Descrição (Rodapé)
+                  <textarea id="sc-site-description" rows="2" placeholder="O seu portal de notícias..."></textarea>
+                </label>
+                <label style="grid-column: 1 / -1;">Categorias do Rodapé (separadas por vírgula)
+                  <input type="text" id="sc-footer-categories" placeholder="Politica,Economia,Esportes,Tecnologia">
+                </label>
+
+                <h3 style="grid-column: 1 / -1; margin-top:16px; font-size:0.95rem; border-top:1px solid var(--border); padding-top:12px; color: #4f9cf9;">🔗 Barra de Navegação (Botões do Menu)</h3>
+                <p style="grid-column: 1 / -1; font-size:0.8rem; color:var(--muted); margin:0 0 10px;">
+                  Defina os botões que aparecem na barra do site. Deixe o <strong>Nome</strong> em branco para ocultar o botão. A URL deve começar com <code>/?category=</code> ou ser um link completo.
+                </p>
+                <div id="nav-items-editor" style="grid-column: 1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+
+                <h3 style="grid-column: 1 / -1; margin-top:16px; font-size:0.95rem; border-top:1px solid var(--border); padding-top:12px; color:var(--accent);">🔴 Transmissão Ao Vivo (Live YouTube)</h3>
+                <label>Status da Live
+                  <select id="sc-live-status">
+                    <option value="auto">Automático (Embed Canal YouTube)</option>
+                    <option value="on">Forçar Ativado (Link Direto / Vídeo)</option>
+                    <option value="off">Desativado (Sem Live)</option>
+                  </select>
+                </label>
+                <label>Título da Live
+                  <input type="text" id="sc-live-title" placeholder="Transmissão Ao Vivo">
+                </label>
+                <label>ID ou Nome do Canal do YouTube
+                  <input type="text" id="sc-live-youtube-channel-id" placeholder="Ex: UC1234567890 ou @seucanal">
+                  <span style="font-size:0.7rem;color:var(--muted);">Para o modo automático transmitir qualquer live iniciada no canal</span>
+                </label>
+                <label>Link Direto de Vídeo/Live (Opcional)
+                  <input type="text" id="sc-live-video-url" placeholder="https://www.youtube.com/watch?v=... ou https://youtube.com/live/...">
+                  <span style="font-size:0.7rem;color:var(--muted);">Usado caso queira fixar uma live ou vídeo específico</span>
+                </label>
+
+                <h3 style="grid-column: 1 / -1; margin-top:16px; font-size:0.95rem; border-top:1px solid var(--border); padding-top:12px;">Redes Sociais</h3>
+                <label>Instagram
+                  <input type="text" id="sc-social-instagram" placeholder="Link ou nome do perfil">
+                </label>
+                <label>Twitter / X
+                  <input type="text" id="sc-social-twitter" placeholder="Link ou nome do perfil">
+                </label>
+                <label>Facebook
+                  <input type="text" id="sc-social-facebook" placeholder="Link ou nome da página">
+                </label>
+                <label>YouTube
+                  <input type="text" id="sc-social-youtube" placeholder="Link ou nome do canal">
+                </label>
+
+                <h3 style="grid-column: 1 / -1; margin-top:16px; font-size:0.95rem; border-top:1px solid var(--border); padding-top:12px;">Links Institucionais</h3>
+                <label>Sobre Nós
+                  <input type="text" id="sc-inst-sobre" placeholder="Link ou texto">
+                </label>
+                <label>Contato
+                  <input type="text" id="sc-inst-contato" placeholder="Link ou texto">
+                </label>
+                <label>Anuncie
+                  <input type="text" id="sc-inst-anuncie" placeholder="Link ou texto">
+                </label>
+                <label>Política de Privacidade
+                  <input type="text" id="sc-inst-privacidade" placeholder="Link ou texto">
+                </label>
+
+                <label style="grid-column: 1 / -1;">Copyright (Rodapé)
+                  <input type="text" id="sc-copyright" placeholder="2026 Paralelo Comunica. Todos os direitos reservados.">
+                </label>
+
+                <div class="form-actions" style="grid-column: 1 / -1;">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+        <!-- PÁGINAS INSTITUCIONAIS -->
+        <section id="section-pages" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Páginas Institucionais</h2>
+              <span class="panel-subtitle">Edite o conteúdo das páginas Sobre, Contato, Anuncie e Privacidade</span>
+            </div>
+            <div class="admin-panel-body">
+              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                <button class="btn btn-page-tab active" data-page="sobre">Sobre Nós</button>
+                <button class="btn btn-page-tab" data-page="contato">Contato</button>
+                <button class="btn btn-page-tab" data-page="anuncie">Anuncie</button>
+                <button class="btn btn-page-tab" data-page="privacidade">Privacidade</button>
+              </div>
+              <form id="page-form" class="admin-form" style="grid-template-columns: 1fr;">
+                <input type="hidden" id="page-slug" value="sobre">
+                <label>Título da Página
+                  <input type="text" id="page-title-input" placeholder="Ex: Sobre o Paralelo Comunica">
+                </label>
+                <label>Conteúdo (use quebras de linha para parágrafos)
+                  <textarea id="page-content-input" rows="15" placeholder="Escreva o conteúdo da página aqui..." style="font-family:monospace;font-size:0.9rem;"></textarea>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                  <a href="#" id="page-preview-link" target="_blank" class="btn btn-outline" style="margin-left:8px;text-decoration:none;">Visualizar</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+        <!-- ASSINANTES -->
+        <section id="section-subscribers" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Assinantes</h2>
+              <span class="panel-subtitle">Assinantes ativos R$ 3,99/mes</span>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Email</th>
+                      <th>Plano</th>
+                      <th>Valor</th>
+                      <th>Status</th>
+                      <th>Expira em</th>
+                      <th>Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="subscribers-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-v2.js"></script>
+</body>
+</html>

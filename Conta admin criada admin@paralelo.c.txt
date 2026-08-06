@@ -1,0 +1,3 @@
+Conta admin criada: admin@paralelo.com.br / admin123
+Servidor iniciado em http://localhost:3000
+PS F:\APLICAÇÕES WEB\LIVIA\Paralelo-Comunica> 
