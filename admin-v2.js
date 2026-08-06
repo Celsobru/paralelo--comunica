@@ -692,7 +692,6 @@ document.getElementById('client-form').addEventListener('submit', async event =>
   document.getElementById('client-form').reset();
   document.getElementById('client-form').querySelector('button[type="submit"]').textContent = 'Salvar Cliente';
   await loadClients();
-  if (currentUserRole === "admin") await loadUsers();
 });
 
 document.getElementById('adspace-form').addEventListener('submit', async event => {
@@ -1503,6 +1502,7 @@ async function init() {
     loadSiteConfig(),
     loadPage('sobre'),
     loadSubscribers(),
+    (currentUserRole === "admin" ? loadUsers() : Promise.resolve())
   ]);
   startWhatsappPoll();
 }
