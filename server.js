@@ -1040,7 +1040,7 @@ app.post('/api/forgot-password', async (req, res) => {
   const token = crypto.randomBytes(32).toString('hex');
   resetTokens[token] = { userId: user.id, expires: Date.now() + 3600000 };
   console.log(`[Reset] Token para ${email}: ${token}`);
-  res.json({ ok: true, message: 'Link de redefinicao enviado! (Verifique o console do servidor)', token });
+  res.json({ ok: true, message: 'Link de redefinicao enviado! (Verifique o console do servidor)' });
 });
 
 app.post('/api/reset-password', async (req, res) => {
