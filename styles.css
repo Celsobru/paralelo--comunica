@@ -1119,9 +1119,11 @@ html, body {
 
 @media (max-width: 768px) {
   /* Prevent Any Horizontal Overflow */
-  body, .ticker-bar, .site-header, .header-main, .category-nav, main, footer, .container, .main-layout {
+  body, .ticker-bar, .site-header, .header-main, main, .main-content, footer, .container, .main-layout, .ad-slot-container {
     max-width: 100vw !important;
+    width: 100% !important;
     box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
 
   /* Ticker Bar on Mobile */
