@@ -1150,3 +1150,19 @@ a {
     font-size: 0.8rem;
   }
 }
+
+/* ===== ENHANCED MOBILE RESPONSIVE FIXES ===== */
+@media (max-width: 768px) {
+  .header-main { height: auto !important; flex-direction: column !important; padding: 12px 15px !important; gap: 10px !important; }
+  .brand-logo-img { height: 50px !important; width: auto !important; max-width: 180px !important; }
+  .header-center { padding: 0 !important; font-size: 0.85rem !important; }
+  .brand-slogan { font-size: 0.9rem !important; }
+  .ticker-bar .ticker-inner { overflow-x: auto !important; gap: 12px !important; padding: 8px 12px !important; -webkit-overflow-scrolling: touch; }
+  .ticker-bar .ticker-inner::-webkit-scrollbar { display: none; }
+  .category-nav-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .category-nav { flex-wrap: nowrap !important; white-space: nowrap !important; }
+  .news-featured .card-title { font-size: 1.25rem !important; }
+  .news-featured .card-image { height: 220px !important; }
+  .modal-content { width: 94% !important; margin: 15px auto !important; padding: 16px !important; max-height: 90vh !important; overflow-y: auto !important; }
+  .main-layout { grid-template-columns: 1fr !important; gap: 20px !important; }
+}
