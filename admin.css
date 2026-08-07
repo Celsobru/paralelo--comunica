@@ -1,21 +1,21 @@
 /* ===== BASE / VARIABLES ===== */
 :root {
-  --bg: #090d16;
-  --surface: #111827;
-  --text: #f3f4f6;
-  --muted: #9ca3af;
-  --accent: #3b82f6;
-  --accent-hover: #1d4ed8;
-  --border: #1f2937;
-  --sidebar-bg: #070a13;
-  --sidebar-text: #9ca3af;
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666666;
+  --accent: #cc0000;
+  --accent-hover: #a30000;
+  --border: #e0e0e0;
+  --sidebar-bg: #1a1a1a;
+  --sidebar-text: rgba(255,255,255,0.7);
   --sidebar-active: #ffffff;
   --sidebar-width: 260px;
   --header-height: 60px;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
 }
 
 * {
