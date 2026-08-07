@@ -419,7 +419,7 @@ app.get('/api/admin/ad-spaces/:id', requireMaster, async (req, res) => {
 // ===== ADMIN ADS =====
 app.get('/api/admin/ads', requireAdmin, async (req, res) => {
   const ads = await allAsync(
-    'SELECT a.*, c.company_name AS client_name, s.name AS space_name FROM ads a JOIN clients c ON a.client_id = c.id JOIN ad_spaces s ON a.ad_space_id = s.id ORDER BY a.created_at DESC'
+    "SELECT a.*, COALESCE(c.company_name, 'Cliente Removido/Sem Perfil') AS client_name, COALESCE(s.name, 'Espaço Removido') AS space_name FROM ads a LEFT JOIN clients c ON a.client_id = c.id LEFT JOIN ad_spaces s ON a.ad_space_id = s.id ORDER BY a.created_at DESC"
   );
   res.json(ads);
 });
@@ -435,7 +435,7 @@ app.post('/api/admin/ads', requireAdmin, async (req, res) => {
 
 app.get('/api/admin/ads/:id', requireAdmin, async (req, res) => {
   const ad = await getAsync(
-    'SELECT a.*, c.company_name AS client_name, s.name AS space_name FROM ads a JOIN clients c ON a.client_id = c.id JOIN ad_spaces s ON a.ad_space_id = s.id WHERE a.id = ?',
+    "SELECT a.*, COALESCE(c.company_name, 'Cliente Removido/Sem Perfil') AS client_name, COALESCE(s.name, 'Espaço Removido') AS space_name FROM ads a LEFT JOIN clients c ON a.client_id = c.id LEFT JOIN ad_spaces s ON a.ad_space_id = s.id WHERE a.id = ?",
     [req.params.id]
   );
   if (!ad) return res.status(404).json({ error: 'Anuncio nao encontrado' });
