@@ -142,22 +142,24 @@ a {
 .header-main {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
+  padding: 10px 20px;
+  display: grid;
+  grid-template-columns: 420px 1fr 220px;
   align-items: center;
-  justify-content: space-between;
-  height: 110px;
+  gap: 20px;
+  min-height: 150px;
 }
 
 .brand {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   flex-shrink: 0;
 }
 
 .brand-logo-img {
-  height: 85px;
-  width: 220px;
+  height: 135px;
+  width: 420px;
   object-fit: contain;
 }
 
@@ -1152,6 +1154,7 @@ html, body {
     z-index: 999;
   }
   .header-main {
+    display: flex !important;
     height: auto !important;
     min-height: auto !important;
     flex-direction: column !important;
