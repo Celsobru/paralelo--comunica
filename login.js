@@ -2,7 +2,6 @@ const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const toggleAdmin = document.getElementById('toggle-admin');
 const toggleClient = document.getElementById('toggle-client');
-const loginHelp = document.getElementById('login-help');
 const showForgot = document.getElementById('show-forgot');
 const backToLogin = document.getElementById('back-to-login');
 const forgotSection = document.getElementById('forgot-section');
@@ -16,21 +15,18 @@ toggleAdmin.addEventListener('click', () => {
   loginType = 'admin';
   toggleAdmin.classList.add('active');
   toggleClient.classList.remove('active');
-  loginHelp.textContent = 'Admin: admin@paralelo.com.br / admin123';
-});
+  });
 
 toggleClient.addEventListener('click', () => {
   loginType = 'client';
   toggleClient.classList.add('active');
   toggleAdmin.classList.remove('active');
-  loginHelp.textContent = 'Crie um cliente no painel admin para ter acesso';
-});
+  });
 
 showForgot.addEventListener('click', (e) => {
   e.preventDefault();
   loginForm.style.display = 'none';
-  loginHelp.style.display = 'none';
-  showForgot.parentElement.style.display = 'none';
+    showForgot.parentElement.style.display = 'none';
   forgotSection.style.display = 'block';
 });
 
@@ -38,8 +34,7 @@ backToLogin.addEventListener('click', (e) => {
   e.preventDefault();
   forgotSection.style.display = 'none';
   loginForm.style.display = '';
-  loginHelp.style.display = '';
-  showForgot.parentElement.style.display = '';
+    showForgot.parentElement.style.display = '';
   resetMessage.textContent = '';
 });
 
