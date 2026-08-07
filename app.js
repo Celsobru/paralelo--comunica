@@ -408,3 +408,11 @@ init().catch(err => {
   renderGrid(filtered);
   renderList(filtered);
 });
+
+// Anti-Inspect Security
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', event => {
+  if (event.keyCode == 123 || (event.ctrlKey && event.shiftKey && event.keyCode == 73)) {
+    event.preventDefault();
+  }
+});

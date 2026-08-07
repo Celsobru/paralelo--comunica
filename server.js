@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const cors = require('cors');
 const axios = require('axios');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 const { runAsync, allAsync, getAsync } = require('./db');
 const rssMonitor = require('./rss-monitor');
 const whatsappBot = require('./whatsapp-bot');
@@ -14,6 +16,13 @@ process.on('unhandledRejection', (err) => {
 });
 
 const app = express();
+
+// Security: IP logging with CF-Connecting-IP
+morgan.token('client-ip', (req) => {
+  return req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+});
+app.use(morgan(':client-ip - :method :url :status :res[content-length] - :response-time ms'));
+
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
@@ -22,7 +31,28 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + ext);
   },
 });
-const upload = multer({ storage, limits: { fileSize: 200 * 1024 * 1024 } });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'video/mp4'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Tipo de arquivo não permitido'), false);
+  }
+};
+const upload = multer({ storage, fileFilter, limits: { fileSize: 200 * 1024 * 1024 } });
+
+// Security: Rate Limiters
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' }
+});
+
+const resetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: { error: 'Muitas tentativas de recuperação. Tente novamente em 1 hora.' }
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -70,7 +100,7 @@ async function ensureAdminUser() {
 }
 
 // ===== AUTH =====
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   const user = await getAsync('SELECT * FROM users WHERE email = ?', [email]);
@@ -1032,7 +1062,7 @@ setInterval(() => {
 const crypto = require('crypto');
 const resetTokens = {};
 
-app.post('/api/forgot-password', async (req, res) => {
+app.post('/api/forgot-password', resetLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email obrigatorio' });
   const user = await getAsync('SELECT id, email FROM users WHERE email = ?', [email]);
@@ -1043,7 +1073,7 @@ app.post('/api/forgot-password', async (req, res) => {
   res.json({ ok: true, message: 'Link de redefinicao enviado! (Verifique o console do servidor)' });
 });
 
-app.post('/api/reset-password', async (req, res) => {
+app.post('/api/reset-password', resetLimiter, async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) return res.status(400).json({ error: 'Token e nova senha obrigatorios' });
   const data = resetTokens[token];
