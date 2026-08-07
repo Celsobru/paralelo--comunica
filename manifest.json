@@ -1,0 +1,24 @@
+{
+  "name": "Paralelo Comunica - Portal de Notícias",
+  "short_name": "Paralelo",
+  "description": "Portal de notícias, informação, rádio ao vivo e colunas exclusivas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b2a",
+  "theme_color": "#1b263b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/uploads/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/uploads/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

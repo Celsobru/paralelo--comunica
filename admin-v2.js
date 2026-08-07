@@ -1586,3 +1586,31 @@ async function deleteUser(id) {
     }
   }
 }
+
+// Service Worker Registration for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Reg error:', err));
+  });
+}
+
+// Mobile Sidebar Toggle Logic
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('mobile-menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (toggleBtn && sidebar && backdrop) {
+    const closeMenu = () => {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('open');
+    };
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      backdrop.classList.toggle('open');
+    });
+    backdrop.addEventListener('click', closeMenu);
+    document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+      item.addEventListener('click', closeMenu);
+    });
+  }
+});

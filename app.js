@@ -416,3 +416,10 @@ document.addEventListener('keydown', event => {
     event.preventDefault();
   }
 });
+
+// Service Worker Registration for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Reg error:', err));
+  });
+}
