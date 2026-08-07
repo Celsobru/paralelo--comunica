@@ -749,31 +749,6 @@ a {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 60px;
-  }
-  .sidebar .brand-text,
-  .sidebar-nav-item span:not(.nav-icon),
-  .sidebar-nav-item .nav-badge,
-  .sidebar-footer button span {
-    display: none;
-  }
-  .sidebar-brand {
-    justify-content: center;
-    padding: 16px 8px;
-  }
-  .sidebar-nav-item {
-    justify-content: center;
-    padding: 12px;
-    border-left: none;
-  }
-  .sidebar-nav-item.active {
-    border-left: none;
-    border-bottom: 2px solid var(--accent);
-  }
-  .admin-main {
-    margin-left: 60px;
-  }
   .admin-form {
     grid-template-columns: 1fr;
   }
