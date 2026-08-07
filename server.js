@@ -16,6 +16,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 const app = express();
+app.set('trust proxy', 1); // Required for rate-limit behind Cloudflare
 
 // Security: IP logging with CF-Connecting-IP
 morgan.token('client-ip', (req) => {
