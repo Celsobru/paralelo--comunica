@@ -1257,19 +1257,30 @@ app.post('/api/register-subscriber', async (req, res) => {
 });
 
 app.post('/api/client/subscribe', requireAuth, async (req, res) => {
-  const { payment_method } = req.body;
+  const { payment_method, months, auto_renew } = req.body;
+  const subMonths = Number(months) === 12 ? 12 : 1;
+  const isAutoRenew = auto_renew ? 1 : 0;
+
   const cfg = await getAsync('SELECT subscription_price_cents FROM payment_config WHERE id = 1');
-  const price_cents = cfg?.subscription_price_cents !== undefined && cfg?.subscription_price_cents !== null ? cfg.subscription_price_cents : 399;
+  const monthly_cents = cfg?.subscription_price_cents !== undefined && cfg?.subscription_price_cents !== null ? cfg.subscription_price_cents : 399;
+
+  // Plano anual (12 meses) tem desconto de 2 meses grátis (paga 10)
+  let price_cents = monthly_cents;
+  if (subMonths === 12) {
+    price_cents = monthly_cents * 10;
+  }
+
   const startedAt = new Date();
   const expiresAt = new Date(startedAt);
-  expiresAt.setMonth(expiresAt.getMonth() + 1);
+  expiresAt.setMonth(expiresAt.getMonth() + subMonths);
+
   await runAsync(
     "UPDATE subscriptions SET status = 'expired' WHERE user_id = ? AND status = 'active'",
     [req.session.userId]
   );
   const result = await runAsync(
-    'INSERT INTO subscriptions (user_id, plan, price_cents, status, started_at, expires_at, payment_method, last_payment_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime("now","localtime"))',
-    [req.session.userId, 'monthly', price_cents, 'active', startedAt.toISOString(), expiresAt.toISOString(), payment_method || 'pix']
+    'INSERT INTO subscriptions (user_id, plan, price_cents, status, started_at, expires_at, payment_method, auto_renew, warning_sent, last_payment_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, datetime("now","localtime"))',
+    [req.session.userId, subMonths === 12 ? 'yearly' : 'monthly', price_cents, 'active', startedAt.toISOString(), expiresAt.toISOString(), payment_method || 'pix', isAutoRenew, startedAt.toISOString()]
   );
   res.json({ id: result.lastID, expires_at: expiresAt.toISOString().split('T')[0] });
 });
@@ -1348,6 +1359,50 @@ app.delete('/api/users/:id', requireMaster, async (req, res) => {
   }
 });
 
+// ===== SUBSCRIPTION EXPIRY WARNING JOB =====
+async function checkExpiringSubscriptions() {
+  try {
+    // Buscar assinaturas ativas que vencem em 24h a 48h (amanhã), sem auto_renew, sem aviso enviado
+    const expiringSoon = await allAsync(`
+      SELECT s.id, s.user_id, s.expires_at, u.name AS user_name, c.phone 
+      FROM subscriptions s
+      JOIN users u ON s.user_id = u.id
+      LEFT JOIN clients c ON s.user_id = c.user_id
+      WHERE s.status = 'active' 
+        AND s.auto_renew = 0 
+        AND s.warning_sent = 0
+        AND date(s.expires_at) <= date('now', '+1 day', 'localtime')
+    `);
+
+    if (expiringSoon.length > 0) {
+      console.log(`[SUBSCRIPTIONS WARNING] Encontradas ${expiringSoon.length} assinaturas vencendo amanhã.`);
+      for (const sub of expiringSoon) {
+        if (sub.phone) {
+          const cleanNumber = sub.phone.replace(/\D/g, '');
+          if (cleanNumber) {
+            const formattedDate = new Date(sub.expires_at).toLocaleDateString('pt-BR');
+            const message = `Olá, *${sub.user_name}*! Passando para lembrar que sua assinatura expira amanhã, dia *${formattedDate}*. Acesse o site do portal para efetuar a renovação e não perder o acesso!`;
+            
+            try {
+              if (whatsappBot.clientReady) {
+                await whatsappBot.sendMessage(cleanNumber, message);
+                console.log(`[SUBSCRIPTIONS WARNING] Alerta de expiração enviado para ${sub.user_name} (${cleanNumber})`);
+              } else {
+                console.warn(`[SUBSCRIPTIONS WARNING] Bot do WhatsApp não está conectado. Alerta não enviado para ${sub.user_name}`);
+              }
+            } catch (sendErr) {
+              console.error(`[SUBSCRIPTIONS WARNING] Falha ao enviar mensagem para ${cleanNumber}:`, sendErr.message);
+            }
+          }
+        }
+        await runAsync('UPDATE subscriptions SET warning_sent = 1 WHERE id = ?', [sub.id]);
+      }
+    }
+  } catch (err) {
+    console.error('[SUBSCRIPTIONS WARNING] Erro no job de alerta de expiração:', err.message);
+  }
+}
+
 // ===== START =====
 const PORT = process.env.PORT || 3002;
 
@@ -1356,6 +1411,11 @@ ensureAdminUser().then(async () => {
   await activateScheduledAds();
   await expireAds();
   await expireClientNews();
+  
+  // Iniciar job de alertas de vencimento de assinaturas
+  checkExpiringSubscriptions();
+  setInterval(checkExpiringSubscriptions, 12 * 60 * 60 * 1000); // Executar a cada 12 horas
+
   whatsappBot.start().catch(err => console.error('WhatsApp bot start error:', err.message));
   app.listen(PORT, () => {
     console.log(`Servidor iniciado em http://localhost:${PORT}`);
