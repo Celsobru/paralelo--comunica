@@ -130,8 +130,18 @@ db.serialize(() => {
     payment_method TEXT,
     last_payment_date TEXT,
     created_at TEXT NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
+
+  db.all('PRAGMA table_info(subscriptions)', (err, cols) => {
+    if (!err && cols) {
+      if (!cols.some(c => c.name === 'auto_renew')) {
+        db.run("ALTER TABLE subscriptions ADD COLUMN auto_renew INTEGER DEFAULT 0");
+      }
+      if (!cols.some(c => c.name === 'warning_sent')) {
+        db.run("ALTER TABLE subscriptions ADD COLUMN warning_sent INTEGER DEFAULT 0");
+      }
+    }
+  });
 
   db.run(`CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
