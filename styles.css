@@ -164,10 +164,10 @@ a {
   margin: 0 auto;
   padding: 10px 20px;
   display: grid;
-  grid-template-columns: 420px 1fr 220px;
+  grid-template-columns: 320px 1fr auto;
   align-items: center;
   gap: 20px;
-  min-height: 150px;
+  min-height: 140px;
 }
 
 .brand {
@@ -178,8 +178,9 @@ a {
 }
 
 .brand-logo-img {
-  height: 135px;
-  width: 420px;
+  max-height: 110px;
+  max-width: 320px;
+  width: auto;
   object-fit: contain;
 }
 
@@ -190,22 +191,22 @@ a {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 5px;
+  gap: 8px;
   min-width: 0;
-  padding: 0 20px;
-  overflow: hidden;
+  padding: 0 15px;
 }
 
 .brand-slogan {
   color: #ffffff;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 1.8rem;
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
   font-weight: 700;
   font-style: italic;
-  letter-spacing: 0.03em;
-  line-height: 1.1;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 100%;
 }
 
 .header-news-ticker {
@@ -215,9 +216,10 @@ a {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 14px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
+  margin: 0 auto;
   overflow: hidden;
 }
 
