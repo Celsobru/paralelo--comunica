@@ -283,7 +283,26 @@ async function loadAdSlots() {
         container.innerHTML = renderAdHtml(space);
         container.style.display = 'block';
       } else {
-        container.style.display = 'none';
+        const siteCfg = window.siteConfig || {};
+        const cleanPhone = (siteCfg.whatsapp_phone || '').replace(/\D/g, '');
+        if (cleanPhone) {
+          const waLink = `https://wa.me/${cleanPhone}?text=Olá!%20Gostaria%20de%20anunciar%20no%20espaço%20"${encodeURIComponent(space.name)}"%20do%20site.`;
+          container.innerHTML = `
+            <div class="ad-content ad-vacant">
+              <a href="${waLink}" target="_blank" rel="noopener" class="ad-vacant-link" style="display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed #3b82f6; background:#eff6ff; color:#1e3a8a; padding:15px; text-decoration:none; border-radius:6px; transition:all 0.2s ease;">
+                <span style="font-size:1.1rem; font-weight:700; color:#2563eb;">Anuncie Aqui!</span>
+                <span style="font-size:0.8rem; color:#1e40af; margin-top:4px;">Espaço disponível: ${space.name} (${space.width}x${space.height})</span>
+                <span style="font-size:0.75rem; color:#15803d; font-weight:600; margin-top:6px; display:inline-flex; align-items:center; gap:6px;">
+                  <svg style="width:14px; height:14px; fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.863-9.73.001-2.595-1.013-5.035-2.855-6.882-1.844-1.848-4.293-2.865-6.887-2.866-5.439 0-9.862 4.37-9.865 9.73-.001 1.776.499 3.51 1.447 5.037l-.965 3.522 3.635-.953zm11.758-5.385c-.328-.164-1.942-.96-2.242-1.07-.3-.11-.518-.164-.736.164-.218.328-.845 1.07-1.036 1.29-.19.217-.38.245-.708.081-.328-.164-1.386-.511-2.64-1.63-1.002-.895-1.678-2.001-1.875-2.33-.197-.328-.021-.506.143-.668.147-.147.328-.383.492-.575.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.575-.082-.164-.736-1.777-.999-2.434-.263-.636-.525-.55-.736-.56-.21-.01-.453-.01-.695-.01-.242 0-.636.09-.968.453-.332.364-1.27 1.242-1.27 3.029s1.3 3.5 1.482 3.743c.182.242 2.56 3.91 6.2 5.479.867.373 1.543.597 2.071.765.871.277 1.664.238 2.29.145.698-.104 1.942-.795 2.215-1.56.273-.765.273-1.422.191-1.56-.081-.138-.299-.219-.627-.383z"/></svg>
+                  Contatar Administrador via WhatsApp
+                </span>
+              </a>
+            </div>
+          `;
+          container.style.display = 'block';
+        } else {
+          container.style.display = 'none';
+        }
       }
     });
   } catch (e) {}

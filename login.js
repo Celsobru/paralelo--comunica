@@ -82,6 +82,8 @@ loginForm.addEventListener('submit', async event => {
       window.location.href = '/admin-v2.html';
     } else if (user.role === 'client') {
       window.location.href = '/client.html';
+    } else if (user.role === 'subscriber') {
+      window.location.href = '/subscribe.html';
     } else {
       loginError.textContent = 'Tipo de conta não reconhecido';
     }

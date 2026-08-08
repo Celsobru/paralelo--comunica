@@ -728,7 +728,7 @@ app.get('/api/payment-config', async (req, res) => {
 
 app.get('/api/subscription-price', async (req, res) => {
   const config = await getAsync('SELECT subscription_price_cents FROM payment_config WHERE id = 1');
-  const price_cents = config?.subscription_price_cents || 399;
+  const price_cents = config?.subscription_price_cents !== undefined && config?.subscription_price_cents !== null ? config.subscription_price_cents : 399;
   const price_reais = (price_cents / 100).toFixed(2).replace('.', ',');
   res.json({ price_cents, price_reais: `R$ ${price_reais}` });
 });
@@ -1218,10 +1218,48 @@ app.get('/api/client/subscription', requireClient, async (req, res) => {
   res.json(sub || null);
 });
 
-app.post('/api/client/subscribe', requireClient, async (req, res) => {
+app.post('/api/register-subscriber', async (req, res) => {
+  const { name, city, phone, email, password } = req.body;
+  if (!name || !city || !phone || !email || !password) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
+  }
+
+  try {
+    const existingUser = await getAsync('SELECT id FROM users WHERE email = ?', [email]);
+    if (existingUser) {
+      return res.status(400).json({ error: 'Este e-mail já está cadastrado.' });
+    }
+
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const userResult = await runAsync(
+      'INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, datetime("now","localtime"))',
+      [name, email, passwordHash, 'subscriber']
+    );
+    const userId = userResult.lastID;
+
+    // Criar perfil em clients para que possamos enviar WhatsApp e salvar a cidade
+    await runAsync(
+      'INSERT INTO clients (user_id, company_name, phone, website, notes, city, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now","localtime"))',
+      [userId, name, phone, '', 'Assinante cadastrado pelo site', city]
+    );
+
+    req.session.userId = userId;
+    req.session.role = 'subscriber';
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error in register-subscriber:', err.message);
+    res.status(500).json({ error: 'Erro no servidor ao cadastrar.' });
+  }
+});
+
+app.post('/api/client/subscribe', requireAuth, async (req, res) => {
   const { payment_method } = req.body;
   const cfg = await getAsync('SELECT subscription_price_cents FROM payment_config WHERE id = 1');
-  const price_cents = cfg?.subscription_price_cents || 399;
+  const price_cents = cfg?.subscription_price_cents !== undefined && cfg?.subscription_price_cents !== null ? cfg.subscription_price_cents : 399;
   const startedAt = new Date();
   const expiresAt = new Date(startedAt);
   expiresAt.setMonth(expiresAt.getMonth() + 1);
@@ -1236,7 +1274,7 @@ app.post('/api/client/subscribe', requireClient, async (req, res) => {
   res.json({ id: result.lastID, expires_at: expiresAt.toISOString().split('T')[0] });
 });
 
-app.post('/api/client/subscription/cancel', requireClient, async (req, res) => {
+app.post('/api/client/subscription/cancel', requireAuth, async (req, res) => {
   await runAsync(
     "UPDATE subscriptions SET status = 'cancelled' WHERE user_id = ? AND status = 'active'",
     [req.session.userId]
