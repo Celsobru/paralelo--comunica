@@ -639,6 +639,10 @@
                 <label class="full-width">Mensagem
                   <textarea id="notification-message" rows="4" required></textarea>
                 </label>
+                <div class="template-actions full-width" style="margin-bottom: 12px; display: flex; gap: 8px;">
+                  <button type="button" id="btn-load-template" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Usar Mensagem Padrão</button>
+                  <button type="button" id="btn-save-template" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Salvar como Padrão</button>
+                </div>
                 <label style="flex-direction:row; gap:8px; align-items:center;">
                   <input type="checkbox" id="notification-send-now" style="width:auto;">
                   Enviar agora
@@ -651,8 +655,9 @@
             </div>
           </div>
           <div class="admin-panel">
-            <div class="admin-panel-header">
+            <div class="admin-panel-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
               <h2>Notificações Enviadas</h2>
+              <button id="btn-clear-notifications" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;">Limpar Histórico</button>
             </div>
             <div class="admin-panel-body">
               <div class="admin-table-wrap">
@@ -663,6 +668,7 @@
                       <th>Público</th>
                       <th>Status</th>
                       <th>Enviado</th>
+                      <th>Ações</th>
                     </tr>
                   </thead>
                   <tbody id="notifications-table"></tbody>

@@ -554,7 +554,7 @@ async function loadNotifications() {
   const notes = await fetchJson('/api/admin/notifications');
   const table = document.getElementById('notifications-table');
   if (!notes.length) {
-    table.innerHTML = '<tr><td colspan="4" class="empty-state">Nenhuma notificação enviada.</td></tr>';
+    table.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma notificação enviada.</td></tr>';
     return;
   }
   table.innerHTML = notes.map(item => `
@@ -563,8 +563,31 @@ async function loadNotifications() {
       <td>${item.audience}</td>
       <td>${badgeForStatus(item.status)}</td>
       <td>${item.sent_at || '-'}</td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="deleteNotification(${item.id})">Excluir</button>
+      </td>
     </tr>
   `).join('');
+}
+
+async function deleteNotification(id) {
+  if (!confirm('Deseja realmente excluir esta notificação do histórico?')) return;
+  try {
+    await fetchJson(`/api/admin/notifications/${id}`, { method: 'DELETE' });
+    await loadNotifications();
+  } catch (err) {
+    alert('Erro ao excluir notificação: ' + err.message);
+  }
+}
+
+async function clearNotificationHistory() {
+  if (!confirm('Deseja realmente limpar todo o histórico de notificações?')) return;
+  try {
+    await fetchJson('/api/admin/notifications', { method: 'DELETE' });
+    await loadNotifications();
+  } catch (err) {
+    alert('Erro ao limpar histórico: ' + err.message);
+  }
 }
 
 async function uploadImage(file) {
@@ -810,19 +833,66 @@ document.getElementById('ad-space').addEventListener('change', function() {
 
 document.getElementById('notification-form').addEventListener('submit', async event => {
   event.preventDefault();
-  await fetchJson('/api/admin/notifications', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: document.getElementById('notification-title').value,
-      message: document.getElementById('notification-message').value,
-      audience: document.getElementById('notification-audience').value,
-      sendNow: document.getElementById('notification-send-now').checked,
-    }),
-  });
-  document.getElementById('notification-form').reset();
-  await loadNotifications();
+  const sendNow = document.getElementById('notification-send-now').checked;
+  
+  try {
+    await fetchJson('/api/admin/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: document.getElementById('notification-title').value,
+        message: document.getElementById('notification-message').value,
+        audience: document.getElementById('notification-audience').value,
+        sendNow: sendNow,
+      }),
+    });
+    
+    if (sendNow) {
+      alert('Notificação enviada para a fila de disparo com sucesso!');
+    } else {
+      alert('Notificação salva como rascunho com sucesso!');
+    }
+    
+    document.getElementById('notification-form').reset();
+    await loadNotifications();
+  } catch (err) {
+    alert('Erro ao enviar notificação: ' + err.message);
+  }
 });
+
+// Eventos de Template de Mensagem Padrão
+document.getElementById('btn-load-template').addEventListener('click', async () => {
+  try {
+    const data = await fetchJson('/api/admin/notifications/template');
+    if (data && data.template) {
+      document.getElementById('notification-message').value = data.template;
+    } else {
+      alert('Nenhuma mensagem padrão cadastrada.');
+    }
+  } catch (err) {
+    alert('Erro ao carregar mensagem padrão: ' + err.message);
+  }
+});
+
+document.getElementById('btn-save-template').addEventListener('click', async () => {
+  const templateText = document.getElementById('notification-message').value.trim();
+  if (!templateText) {
+    return alert('Digite o texto na Mensagem que deseja salvar como padrão.');
+  }
+  try {
+    await fetchJson('/api/admin/notifications/template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template: templateText }),
+    });
+    alert('Mensagem padrão salva com sucesso!');
+  } catch (err) {
+    alert('Erro ao salvar mensagem padrão: ' + err.message);
+  }
+});
+
+// Evento de Limpar Histórico de Notificações
+document.getElementById('btn-clear-notifications').addEventListener('click', clearNotificationHistory);
 
 async function loadSiteStats() {
   try {
