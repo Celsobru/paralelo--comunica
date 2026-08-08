@@ -88,6 +88,7 @@
       </div>
       <div class="header-actions">
         <div class="header-buttons">
+          <a href="#" target="_blank" rel="noopener" class="btn-header btn-announce" id="btn-announce" style="display: none;">Anuncie</a>
           <a href="subscribe.html" class="btn-header btn-outline" id="btn-subscribe-price">Assine</a>
           <a href="login.html" class="btn-header" id="btn-login">Entrar</a>
         </div>
@@ -234,6 +235,14 @@
 
     fetch('/api/site-config').then(r=>r.json()).then(cfg=>{
       window.siteConfig = cfg;
+      if (cfg.whatsapp_phone) {
+        const cleanPhone = cfg.whatsapp_phone.replace(/\D/g, '');
+        const btn = document.getElementById('btn-announce');
+        if (btn && cleanPhone) {
+          btn.href = `https://wa.me/${cleanPhone}?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20como%20anunciar%20no%20seu%20portal.`;
+          btn.style.display = 'inline-block';
+        }
+      }
       if(cfg.site_slogan) {
         const sloganEl = document.querySelector('.brand-slogan');
         if(sloganEl) sloganEl.textContent = cfg.site_slogan;
