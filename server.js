@@ -734,12 +734,18 @@ app.get('/api/subscription-price', async (req, res) => {
 });
 
 app.get('/api/site-config', async (req, res) => {
-  const config = await getAsync('SELECT * FROM site_config WHERE id = 1');
-  const rss = await getAsync('SELECT whatsapp_phone FROM rss_config WHERE id = 1');
-  if (config && rss) {
-    config.whatsapp_phone = rss.whatsapp_phone;
+  try {
+    const config = (await getAsync('SELECT * FROM site_config WHERE id = 1')) || {};
+    try {
+      const rss = await getAsync('SELECT whatsapp_phone FROM rss_config WHERE id = 1');
+      if (rss && rss.whatsapp_phone) {
+        config.whatsapp_phone = rss.whatsapp_phone;
+      }
+    } catch(e) {}
+    res.json(config);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
   }
-  res.json(config || {});
 });
 
 app.get('/api/admin/site-config', requireMaster, async (req, res) => {
