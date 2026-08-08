@@ -1262,3 +1262,30 @@ html, body {
     overflow-y: auto !important;
   }
 }
+
+/* Botão Flutuante Anuncie Aqui */
+.floating-ad-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: #2563eb;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 50px;
+  font-weight: bold;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+  transition: all 0.25s ease;
+  font-size: 0.9rem;
+}
+.floating-ad-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(29, 78, 216, 0.5);
+  color: #fff !important;
+}
+
