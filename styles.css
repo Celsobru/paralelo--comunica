@@ -58,6 +58,17 @@ a {
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 102, 255, 0.4);
 }
+.btn-header.btn-announce {
+  background: #16a34a;
+  color: #fff;
+  border: 2px solid #16a34a;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+}
+.btn-header.btn-announce:hover {
+  background: #15803d;
+  border-color: #15803d;
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.5);
+}
 
 /* ===== TICKER BAR ===== */
 .ticker-bar {
@@ -1263,29 +1274,4 @@ html, body {
   }
 }
 
-/* Botão Flutuante Anuncie Aqui */
-.floating-ad-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999;
-  display: none;
-  align-items: center;
-  gap: 8px;
-  background: #2563eb;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 50px;
-  font-weight: bold;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-  transition: all 0.25s ease;
-  font-size: 0.9rem;
-}
-.floating-ad-btn:hover {
-  background: #1d4ed8;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(29, 78, 216, 0.5);
-  color: #fff !important;
-}
 
