@@ -130,6 +130,7 @@ db.serialize(() => {
     payment_method TEXT,
     last_payment_date TEXT,
     created_at TEXT NOT NULL,
+    FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
 
   db.all('PRAGMA table_info(subscriptions)', (err, cols) => {
