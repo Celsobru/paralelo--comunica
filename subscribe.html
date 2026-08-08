@@ -85,9 +85,23 @@
     subMethodPix.addEventListener('click', () => { subMethodPix.classList.add('active'); subMethodCard.classList.remove('active'); subPixInfo.style.display=''; subCardInfo.style.display='none'; });
     subMethodCard.addEventListener('click', () => { subMethodCard.classList.add('active'); subMethodPix.classList.remove('active'); subCardInfo.style.display=''; subPixInfo.style.display='none'; });
 
+    let isFree = false;
     fetch('/api/subscription-price').then(r=>r.json()).then(d=>{
-      document.getElementById('sub-price-display').innerHTML = d.price_reais + '<span>/mês</span>';
-      document.getElementById('btn-subscribe').textContent = 'Assinar Agora - ' + d.price_reais;
+      isFree = d.price_cents === 0;
+      if (isFree) {
+        document.getElementById('sub-price-display').innerHTML = 'Grátis';
+        document.getElementById('btn-subscribe').textContent = 'Ativar Assinatura Gratuita';
+        // Ocultar seletores de pagamento
+        if (document.querySelector('.sub-toggle')) {
+          document.querySelector('.sub-toggle').style.display = 'none';
+        }
+        subPixInfo.innerHTML = '<p style="text-align:center;font-weight:600;color:#2e7d32;margin:10px 0;">Assinatura 100% gratuita! Clique no botão abaixo para ativar imediatamente.</p>';
+        subPixInfo.style.display = '';
+        subCardInfo.style.display = 'none';
+      } else {
+        document.getElementById('sub-price-display').innerHTML = d.price_reais + '<span>/mês</span>';
+        document.getElementById('btn-subscribe').textContent = 'Assinar Agora - ' + d.price_reais;
+      }
     }).catch(()=>{});
 
     async function checkLogin() {
@@ -105,6 +119,7 @@
     }
 
     async function loadPixConfig() {
+      if (isFree) return; // Não precisa carregar dados do Pix se for grátis
       try {
         const res = await fetch('/api/payment-config');
         const cfg = await res.json();
@@ -114,7 +129,7 @@
     }
 
     document.getElementById('btn-subscribe').addEventListener('click', async () => {
-      const method = subMethodPix.classList.contains('active') ? 'pix' : 'card';
+      const method = isFree ? 'free' : (subMethodPix.classList.contains('active') ? 'pix' : 'card');
       const errEl = document.getElementById('sub-error');
       const successEl = document.getElementById('sub-success');
       errEl.textContent = '';
