@@ -47,8 +47,45 @@
         <li>Suporte prioritario</li>
       </ul>
       <div id="sub-logged-out">
-        <p style="margin-bottom:12px;font-size:0.9rem;">Faca login para assinar</p>
-        <a href="login.html" class="sub-btn" style="display:inline-block;text-decoration:none;text-align:center;">Fazer Login</a>
+        <div style="display:flex; border-bottom: 2px solid #eee; margin-bottom: 15px; border-radius: 4px; overflow: hidden;">
+          <button id="tab-login" type="button" style="flex:1; padding:10px; border:none; background:#2563eb; color:#fff; font-weight:bold; cursor:pointer; font-size:0.9rem;">Entrar</button>
+          <button id="tab-register" type="button" style="flex:1; padding:10px; border:none; background:#f1f5f9; color:#334155; font-weight:bold; cursor:pointer; font-size:0.9rem;">Cadastrar</button>
+        </div>
+        
+        <div id="box-login" style="display: block;">
+          <form id="quick-login-form" style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">Email
+              <input type="email" id="login-email" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">Senha
+              <input type="password" id="login-password" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <button type="submit" class="sub-btn" style="margin-top: 5px;">Acessar e Continuar</button>
+            <p id="login-error" style="color: #ef4444; font-size: 0.8rem; text-align: center; margin-top: 5px; font-weight:600;"></p>
+          </form>
+        </div>
+
+        <div id="box-register" style="display: none;">
+          <form id="quick-register-form" style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">Nome Completo
+              <input type="text" id="reg-name" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">Cidade
+              <input type="text" id="reg-city" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">WhatsApp (com DDD)
+              <input type="text" id="reg-whatsapp" placeholder="Ex: 14999999999" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">Email
+              <input type="email" id="reg-email" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <label style="font-size: 0.8rem; font-weight: 600; display:block;">Senha
+              <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:2px;">
+            </label>
+            <button type="submit" class="sub-btn" style="margin-top: 5px; background-color: #2e7d32; border-color: #2e7d32;">Criar Conta e Continuar</button>
+            <p id="reg-error" style="color: #ef4444; font-size: 0.8rem; text-align: center; margin-top: 5px; font-weight:600;"></p>
+          </form>
+        </div>
       </div>
       <div id="sub-logged-in" style="display:none;">
         <div class="sub-toggle">
@@ -148,6 +185,81 @@
         document.getElementById('btn-subscribe').textContent = 'Assinatura Ativa!';
       } catch(e) {
         errEl.textContent = e.message;
+      }
+    });
+
+    // Alternar abas de Login / Cadastro
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const boxLogin = document.getElementById('box-login');
+    const boxRegister = document.getElementById('box-register');
+
+    tabLogin.addEventListener('click', () => {
+      tabLogin.style.background = '#2563eb';
+      tabLogin.style.color = '#fff';
+      tabRegister.style.background = '#f1f5f9';
+      tabRegister.style.color = '#334155';
+      boxLogin.style.display = 'block';
+      boxRegister.style.display = 'none';
+    });
+
+    tabRegister.addEventListener('click', () => {
+      tabRegister.style.background = '#2563eb';
+      tabRegister.style.color = '#fff';
+      tabLogin.style.background = '#f1f5f9';
+      tabLogin.style.color = '#334155';
+      boxRegister.style.display = 'block';
+      boxLogin.style.display = 'none';
+    });
+
+    // Envio do Login Rápido
+    document.getElementById('quick-login-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao logar');
+        
+        // Login com sucesso, atualizar interface
+        checkLogin();
+      } catch (err) {
+        errorEl.textContent = err.message;
+      }
+    });
+
+    // Envio do Cadastro Rápido
+    document.getElementById('quick-register-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const name = document.getElementById('reg-name').value;
+      const city = document.getElementById('reg-city').value;
+      const phone = document.getElementById('reg-whatsapp').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+      const errorEl = document.getElementById('reg-error');
+      errorEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/register-subscriber', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, city, phone, email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao cadastrar');
+        
+        // Cadastro com sucesso e automaticamente logado, atualizar interface
+        checkLogin();
+      } catch (err) {
+        errorEl.textContent = err.message;
       }
     });
 

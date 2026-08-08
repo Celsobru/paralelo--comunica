@@ -82,6 +82,12 @@ db.serialize(() => {
     }
   });
 
+  db.all('PRAGMA table_info(clients)', (err, cols) => {
+    if (!err && cols && !cols.some(c => c.name === 'city')) {
+      db.run('ALTER TABLE clients ADD COLUMN city TEXT DEFAULT \'\'');
+    }
+  });
+
   db.run(`CREATE TABLE IF NOT EXISTS ad_spaces (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
