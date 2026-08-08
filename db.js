@@ -280,6 +280,9 @@ db.serialize(() => {
         ]);
         db.run(`ALTER TABLE site_config ADD COLUMN nav_items TEXT DEFAULT '${defaultNav}'`);
       }
+      if (!cols.some(c => c.name === 'whatsapp_template')) {
+        db.run("ALTER TABLE site_config ADD COLUMN whatsapp_template TEXT DEFAULT ''");
+      }
     }
   });
 

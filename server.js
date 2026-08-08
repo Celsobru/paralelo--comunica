@@ -546,6 +546,74 @@ app.delete('/api/client/ads/:id', requireClient, async (req, res) => {
 });
 
 // ===== ADMIN NOTIFICATIONS =====
+async function broadcastNotification(notificationId, title, message, audience) {
+  try {
+    let phones = [];
+    if (audience === 'clients') {
+      const rows = await allAsync("SELECT DISTINCT phone FROM clients WHERE phone IS NOT NULL AND phone != ''");
+      phones = rows.map(r => r.phone);
+    } else if (audience === 'subscribers') {
+      const rows = await allAsync(`
+        SELECT DISTINCT c.phone FROM clients c
+        JOIN subscriptions s ON c.user_id = s.user_id
+        WHERE c.phone IS NOT NULL AND c.phone != '' AND s.status = 'active'
+      `);
+      phones = rows.map(r => r.phone);
+    } else { // 'all'
+      const rows = await allAsync("SELECT DISTINCT phone FROM clients WHERE phone IS NOT NULL AND phone != ''");
+      phones = rows.map(r => r.phone);
+    }
+
+    if (phones.length === 0) {
+      await runAsync(
+        "UPDATE notifications SET status = 'sent', sent_at = datetime('now','localtime') WHERE id = ?",
+        [notificationId]
+      );
+      return;
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const phone of phones) {
+      if (!whatsappBot.ready) {
+        failCount++;
+        continue;
+      }
+      let cleanNumber = phone.replace(/\D/g, '');
+      if (cleanNumber.length > 0) {
+        if (cleanNumber.length <= 11 && !cleanNumber.startsWith('55')) {
+          cleanNumber = '55' + cleanNumber;
+        }
+        try {
+          const fullMessage = `📢 *${title}*\n\n${message}`;
+          await whatsappBot.sendMessage(cleanNumber, fullMessage);
+          successCount++;
+          // Delay de 2 segundos para evitar banimento do WhatsApp
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (err) {
+          console.error(`Failed to send notification to ${phone}:`, err.message);
+          failCount++;
+        }
+      } else {
+        failCount++;
+      }
+    }
+
+    const finalStatus = failCount === phones.length ? 'failed' : 'sent';
+    await runAsync(
+      "UPDATE notifications SET status = ?, sent_at = datetime('now','localtime') WHERE id = ?",
+      [finalStatus, notificationId]
+    );
+  } catch (err) {
+    console.error('Error in broadcastNotification:', err.message);
+    await runAsync(
+      "UPDATE notifications SET status = 'failed' WHERE id = ?",
+      [notificationId]
+    );
+  }
+}
+
 app.get('/api/admin/notifications', requireAdmin, async (req, res) => {
   const notifications = await allAsync('SELECT * FROM notifications ORDER BY created_at DESC');
   res.json(notifications);
@@ -553,11 +621,48 @@ app.get('/api/admin/notifications', requireAdmin, async (req, res) => {
 
 app.post('/api/admin/notifications', requireAdmin, async (req, res) => {
   const { title, message, audience, sendNow } = req.body;
+  
+  if (sendNow && !whatsappBot.ready) {
+    return res.status(400).json({ error: 'WhatsApp não está conectado. Escaneie o QR Code primeiro.' });
+  }
+
   const result = await runAsync(
     'INSERT INTO notifications (title, message, audience, status, sent_at, created_at) VALUES (?, ?, ?, ?, ?, datetime("now","localtime"))',
-    [title, message, audience, sendNow ? 'sent' : 'draft', sendNow ? new Date().toISOString() : null]
+    [title, message, audience, sendNow ? 'sending' : 'draft', sendNow ? new Date().toISOString() : null]
   );
-  res.json({ id: result.lastID });
+  
+  const notificationId = result.lastID;
+
+  if (sendNow) {
+    // Dispara a transmissão em segundo plano para não travar a requisição HTTP
+    broadcastNotification(notificationId, title, message, audience).catch(err => {
+      console.error('Broadcast error:', err);
+    });
+  }
+
+  res.json({ id: notificationId, status: sendNow ? 'sending' : 'draft' });
+});
+
+app.get('/api/admin/notifications/template', requireAdmin, async (req, res) => {
+  const row = await getAsync('SELECT whatsapp_template FROM site_config WHERE id = 1');
+  res.json({ template: row?.whatsapp_template || '' });
+});
+
+app.post('/api/admin/notifications/template', requireAdmin, async (req, res) => {
+  const { template } = req.body;
+  await runAsync('UPDATE site_config SET whatsapp_template = ? WHERE id = 1', [template || '']);
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/notifications/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  await runAsync('DELETE FROM notifications WHERE id = ?', [id]);
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/notifications', requireAdmin, async (req, res) => {
+  await runAsync('DELETE FROM notifications');
+  res.json({ ok: true });
 });
 
 // ===== PUBLIC SITE STATS =====
