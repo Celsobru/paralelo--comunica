@@ -735,6 +735,10 @@ app.get('/api/subscription-price', async (req, res) => {
 
 app.get('/api/site-config', async (req, res) => {
   const config = await getAsync('SELECT * FROM site_config WHERE id = 1');
+  const rss = await getAsync('SELECT whatsapp_phone FROM rss_config WHERE id = 1');
+  if (config && rss) {
+    config.whatsapp_phone = rss.whatsapp_phone;
+  }
   res.json(config || {});
 });
 
