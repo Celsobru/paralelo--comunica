@@ -1199,7 +1199,8 @@ document.getElementById('cfg-subscription-price').addEventListener('input', func
 document.getElementById('payment-config-form').addEventListener('submit', async event => {
   event.preventDefault();
   try {
-    const subPriceVal = parseFloat(document.getElementById('cfg-subscription-price').value) || 3.99;
+    const priceInput = document.getElementById('cfg-subscription-price').value;
+    const subPriceVal = priceInput !== '' ? parseFloat(priceInput) : 3.99;
     await fetchJson('/api/admin/payment-config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
