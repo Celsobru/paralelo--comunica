@@ -1261,8 +1261,15 @@ app.post('/api/client/subscribe', requireAuth, async (req, res) => {
   const subMonths = Number(months) === 12 ? 12 : 1;
   const isAutoRenew = auto_renew ? 1 : 0;
 
-  const cfg = await getAsync('SELECT subscription_price_cents FROM payment_config WHERE id = 1');
+  const cfg = await getAsync('SELECT subscription_price_cents, pix_key FROM payment_config WHERE id = 1');
   const monthly_cents = cfg?.subscription_price_cents !== undefined && cfg?.subscription_price_cents !== null ? cfg.subscription_price_cents : 399;
+  const isFree = monthly_cents === 0;
+
+  if (payment_method === 'pix' && !isFree) {
+    if (!cfg || !cfg.pix_key || cfg.pix_key.trim() === '' || cfg.pix_key === 'Chave nao configurada') {
+      return res.status(400).json({ error: 'O pagamento via PIX está indisponível (Chave PIX não configurada pelo administrador).' });
+    }
+  }
 
   // Plano anual (12 meses) tem desconto de 2 meses grátis (paga 10)
   let price_cents = monthly_cents;
