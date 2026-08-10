@@ -1695,6 +1695,49 @@ async function deleteCategory(id, name) {
   }
 }
 
+function formatText(textareaId, action) {
+  const textarea = document.getElementById(textareaId);
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selectedText = textarea.value.substring(start, end);
+  let replacement = '';
+
+  switch (action) {
+    case 'b':
+      replacement = selectedText ? `<b>${selectedText}</b>` : '<b>Texto em negrito</b>';
+      break;
+    case 'i':
+      replacement = selectedText ? `<i>${selectedText}</i>` : '<i>Texto em itálico</i>';
+      break;
+    case 'u':
+      replacement = selectedText ? `<u>${selectedText}</u>` : '<u>Texto sublinhado</u>';
+      break;
+    case 'h2':
+      replacement = selectedText ? `\n<h2>${selectedText}</h2>\n` : '\n<h2>SUBTÍTULO DO ARTIGO</h2>\n';
+      break;
+    case 'h3':
+      replacement = selectedText ? `\n<h3>${selectedText}</h3>\n` : '\n<h3>Subtítulo secundário</h3>\n';
+      break;
+    case 'uppercase':
+      replacement = selectedText ? selectedText.toUpperCase() : '';
+      break;
+    case 'lowercase':
+      replacement = selectedText ? selectedText.toLowerCase() : '';
+      break;
+    case 'quote':
+      replacement = selectedText ? `\n<blockquote>${selectedText}</blockquote>\n` : '\n<blockquote>Texto em citação destacada</blockquote>\n';
+      break;
+    default:
+      return;
+  }
+
+  textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+  textarea.focus();
+  textarea.setSelectionRange(start + replacement.length, start + replacement.length);
+}
+
 document.getElementById('category-form')?.addEventListener('submit', saveCategory);
 document.getElementById('btn-cancel-category')?.addEventListener('click', resetCategoryForm);
 
