@@ -1,6 +1,7 @@
 const sectionTitles = {
   dashboard: 'Dashboard',
   news: 'Gerenciar Notícias',
+  categories: 'Gerenciar Categorias',
   clients: 'Gerenciar Clientes',
   adspaces: 'Espaços de Anúncio',
   ads: 'Gerenciar Anúncios',
@@ -18,6 +19,7 @@ const sectionTitles = {
 const sections = {
   dashboard: document.getElementById('section-dashboard'),
   news: document.getElementById('section-news'),
+  categories: document.getElementById('section-categories'),
   clients: document.getElementById('section-clients'),
   adspaces: document.getElementById('section-adspaces'),
   ads: document.getElementById('section-ads'),
@@ -1561,6 +1563,7 @@ async function init() {
   await Promise.all([
     loadDashboard(),
     loadNews(),
+    loadCategories(),
     loadClients(),
     loadAdSpaces(),
     loadAds(),
@@ -1580,6 +1583,120 @@ async function init() {
   ]);
   startWhatsappPoll();
 }
+
+// ===== CATEGORIAS (CRUD) =====
+let globalCategories = [];
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function escapeJsString(str) {
+  if (!str) return '';
+  return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+async function loadCategories() {
+  try {
+    const res = await fetch('/api/categories');
+    if (!res.ok) return;
+    const cats = await res.json();
+    globalCategories = cats;
+
+    // Populate #category select dropdown in news form
+    const categorySelect = document.getElementById('category');
+    if (categorySelect) {
+      const currentVal = categorySelect.value;
+      categorySelect.innerHTML = '<option value="">Selecione...</option>' + 
+        cats.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+      if (currentVal) categorySelect.value = currentVal;
+    }
+
+    // Populate table in #section-categories
+    const tableBody = document.getElementById('categories-table-body');
+    if (tableBody) {
+      if (cats.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">Nenhuma categoria cadastrada.</td></tr>';
+      } else {
+        tableBody.innerHTML = cats.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td><strong>${escapeHtml(c.name)}</strong></td>
+            <td>${c.sort_order || 0}</td>
+            <td style="text-align:right;">
+              <button class="btn btn-sm btn-outline" onclick="editCategory(${c.id}, '${escapeJsString(c.name)}', ${c.sort_order || 0})">Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id}, '${escapeJsString(c.name)}')">Excluir</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (err) {
+    console.error('Erro ao carregar categorias:', err);
+  }
+}
+
+function editCategory(id, name, sortOrder) {
+  document.getElementById('category-edit-id').value = id;
+  document.getElementById('category-name').value = name;
+  document.getElementById('category-sort-order').value = sortOrder || 0;
+  document.getElementById('btn-save-category').textContent = 'Atualizar Categoria';
+  document.getElementById('btn-cancel-category').classList.remove('hidden');
+  document.getElementById('category-name').focus();
+}
+
+function resetCategoryForm() {
+  document.getElementById('category-edit-id').value = '';
+  document.getElementById('category-name').value = '';
+  document.getElementById('category-sort-order').value = '0';
+  document.getElementById('btn-save-category').textContent = 'Salvar Categoria';
+  document.getElementById('btn-cancel-category').classList.add('hidden');
+}
+
+async function saveCategory(e) {
+  e.preventDefault();
+  const id = document.getElementById('category-edit-id').value;
+  const name = document.getElementById('category-name').value.trim();
+  const sort_order = parseInt(document.getElementById('category-sort-order').value, 10) || 0;
+
+  if (!name) {
+    alert('Informe o nome da categoria.');
+    return;
+  }
+
+  const url = id ? `/api/admin/categories/${id}` : '/api/admin/categories';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, sort_order })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao salvar categoria');
+    resetCategoryForm();
+    await loadCategories();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function deleteCategory(id, name) {
+  if (!confirm(`Deseja realmente excluir a categoria "${name}"?`)) return;
+  try {
+    const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao excluir categoria');
+    await loadCategories();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+document.getElementById('category-form')?.addEventListener('submit', saveCategory);
+document.getElementById('btn-cancel-category')?.addEventListener('click', resetCategoryForm);
 
 showSection('dashboard');
 init().catch(err => console.error(err));

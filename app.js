@@ -428,6 +428,30 @@ init().catch(err => {
   renderList(filtered);
 });
 
+// Dynamic Navbar Categories
+async function loadDynamicNav() {
+  try {
+    const res = await fetch('/api/categories');
+    if (!res.ok) return;
+    const cats = await res.json();
+    if (!Array.isArray(cats) || cats.length === 0) return;
+
+    const navList = document.getElementById('main-nav-list');
+    if (!navList) return;
+
+    const currentCategory = new URLSearchParams(window.location.search).get('category');
+    let html = `<li><a href="/" class="live-indicator">Ao Vivo</a></li>`;
+    html += `<li><a href="/" class="${!currentCategory ? 'active' : ''}">Inicio</a></li>`;
+    cats.forEach(c => {
+      const isActive = currentCategory === c.name ? 'active' : '';
+      const safeName = (c.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      html += `<li><a href="/?category=${encodeURIComponent(c.name)}" class="${isActive}">${safeName}</a></li>`;
+    });
+    navList.innerHTML = html;
+  } catch (e) {}
+}
+loadDynamicNav();
+
 // Anti-Inspect Security
 document.addEventListener('contextmenu', event => event.preventDefault());
 document.addEventListener('keydown', event => {
