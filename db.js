@@ -374,6 +374,9 @@ db.serialize(() => {
       defaultSpaces.forEach(s => stmt.run(...s));
       stmt.finalize();
       console.log('Espaços de anúncio padrão CNN criados.');
+    }
+  });
+
   db.run(`CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL,
