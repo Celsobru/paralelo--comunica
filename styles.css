@@ -68,14 +68,17 @@ a {
   box-shadow: 0 2px 8px rgba(0, 102, 255, 0.4);
 }
 .btn-header.btn-announce {
-  background: #16a34a;
-  color: #fff;
-  border: 2px solid #16a34a;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #16a34a !important;
+  color: #fff !important;
+  border: 2px solid #16a34a !important;
   box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
 }
 .btn-header.btn-announce:hover {
-  background: #15803d;
-  border-color: #15803d;
+  background: #15803d !important;
+  border-color: #15803d !important;
   box-shadow: 0 4px 12px rgba(21, 128, 61, 0.5);
 }
 
