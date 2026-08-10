@@ -31,6 +31,10 @@
           <span class="nav-icon">&#9998;</span>
           <span>Notícias</span>
         </button>
+        <button class="sidebar-nav-item" data-section="categories">
+          <span class="nav-icon">&#9776;</span>
+          <span>Categorias</span>
+        </button>
         <button class="sidebar-nav-item" data-section="clients">
           <span class="nav-icon">&#9823;</span>
           <span>Clientes</span>
@@ -172,14 +176,6 @@
                 <label>Categoria
                   <select id="category" required>
                     <option value="">Selecione...</option>
-                    <option value="Política">Política</option>
-                    <option value="Economia">Economia</option>
-                    <option value="Nacional">Nacional</option>
-                    <option value="Internacional">Internacional</option>
-                    <option value="Esportes">Esportes</option>
-                    <option value="Tecnologia">Tecnologia</option>
-                    <option value="Saúde">Saúde</option>
-                    <option value="Entretenimento">Entretenimento</option>
                   </select>
                 </label>
                 <label id="subcategory-wrap" style="display:none;">Subcategoria (Economia)
@@ -245,6 +241,52 @@
                     </tr>
                   </thead>
                   <tbody id="news-table"></tbody>
+                </table>
+              </div>
+            </div>
+        </section>
+
+        <!-- CATEGORIAS -->
+        <section id="section-categories" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <h2>Gerenciar Categorias</h2>
+            </div>
+            <div class="admin-panel-body">
+              <form id="category-form" class="admin-form" style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
+                <input type="hidden" id="category-edit-id" value="">
+                <label style="flex:2; min-width:200px;">Nome da Categoria
+                  <input type="text" id="category-name" placeholder="Ex: Política, Economia, Esportes..." required>
+                </label>
+                <label style="flex:1; min-width:100px;">Ordem
+                  <input type="number" id="category-sort-order" placeholder="0" value="0">
+                </label>
+                <div style="display:flex; gap:8px;">
+                  <button type="submit" class="btn btn-primary" id="btn-save-category" style="height:42px;">Salvar Categoria</button>
+                  <button type="button" class="btn btn-secondary hidden" id="btn-cancel-category" style="height:42px;">Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="admin-panel" style="margin-top:20px;">
+            <div class="admin-panel-header">
+              <h2>Categorias Cadastradas</h2>
+            </div>
+            <div class="admin-panel-body">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:60px;">ID</th>
+                      <th>Nome</th>
+                      <th style="width:100px;">Ordem</th>
+                      <th style="width:160px; text-align:right;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="categories-table-body">
+                    <tr><td colspan="4" style="text-align:center; color:#888;">Carregando categorias...</td></tr>
+                  </tbody>
                 </table>
               </div>
             </div>

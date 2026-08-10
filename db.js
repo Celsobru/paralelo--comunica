@@ -374,6 +374,23 @@ db.serialize(() => {
       defaultSpaces.forEach(s => stmt.run(...s));
       stmt.finalize();
       console.log('Espaços de anúncio padrão CNN criados.');
+  db.run(`CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL
+  )`);
+
+  db.get('SELECT COUNT(*) AS cnt FROM categories', (err, row) => {
+    if (!err && row && row.cnt === 0) {
+      const defaultCats = [
+        'Política', 'Economia', 'Nacional', 'Internacional',
+        'Esportes', 'Tecnologia', 'Saúde', 'Entretenimento'
+      ];
+      const stmt = db.prepare('INSERT INTO categories (name, sort_order, created_at) VALUES (?, ?, datetime("now","localtime"))');
+      defaultCats.forEach((cat, idx) => stmt.run(cat, idx + 1));
+      stmt.finalize();
+      console.log('Categorias padrão do Paralelo semeadas.');
     }
   });
 

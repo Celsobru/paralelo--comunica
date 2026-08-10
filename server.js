@@ -763,6 +763,67 @@ app.put('/api/admin/site-config', requireMaster, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ==================== CATEGORIES API ====================
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await allAsync('SELECT * FROM categories ORDER BY sort_order ASC, name ASC');
+    res.json(categories || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/categories', requireMaster, async (req, res) => {
+  try {
+    const { name, sort_order } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Nome da categoria é obrigatório.' });
+    }
+    const order = parseInt(sort_order, 10) || 0;
+    const result = await runAsync(
+      'INSERT INTO categories (name, sort_order, created_at) VALUES (?, ?, datetime("now","localtime"))',
+      [name.trim(), order]
+    );
+    res.json({ ok: true, id: result.lastID });
+  } catch (err) {
+    if (err.message && err.message.includes('UNIQUE')) {
+      return res.status(400).json({ error: 'Já existe uma categoria com este nome.' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/categories/:id', requireMaster, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, sort_order } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Nome da categoria é obrigatório.' });
+    }
+    const order = parseInt(sort_order, 10) || 0;
+    await runAsync(
+      'UPDATE categories SET name = ?, sort_order = ? WHERE id = ?',
+      [name.trim(), order, id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    if (err.message && err.message.includes('UNIQUE')) {
+      return res.status(400).json({ error: 'Já existe uma categoria com este nome.' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/categories/:id', requireMaster, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await runAsync('DELETE FROM categories WHERE id = ?', [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/pages/:slug', async (req, res) => {
   const page = await getAsync('SELECT * FROM pages WHERE slug = ?', [req.params.slug]);
   if (!page) return res.status(404).json({ error: 'Página não encontrada' });
