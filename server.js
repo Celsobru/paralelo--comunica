@@ -220,9 +220,13 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
 app.put('/api/admin/news/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { title, category, subcategory, description, full_content, image_url, video_url, source, datetime, status, ad_space_id } = req.body;
+  const existing = await getAsync('SELECT image_url, video_url FROM news WHERE id = ?', [id]);
+  const finalImage = (image_url && image_url.trim()) ? image_url : (existing ? existing.image_url : '');
+  const finalVideo = (video_url && video_url.trim()) ? video_url : (existing ? existing.video_url : '');
+
   await runAsync(
     'UPDATE news SET title = ?, category = ?, subcategory = ?, description = ?, full_content = ?, image_url = ?, video_url = ?, source = ?, datetime = ?, status = ?, ad_space_id = ? WHERE id = ?',
-    [title, category, subcategory || '', description, full_content || '', image_url, video_url || '', source, datetime, status, ad_space_id || null, id]
+    [title, category, subcategory || '', description, full_content || '', finalImage, finalVideo, source, datetime, status, ad_space_id || null, id]
   );
   res.json({ ok: true });
 });
