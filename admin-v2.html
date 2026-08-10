@@ -197,7 +197,17 @@
                   <textarea id="description" rows="2" required></textarea>
                 </label>
                 <label class="full-width">Conteúdo Completo
-                  <textarea id="full-content" rows="5" placeholder="Texto completo da notícia (abre ao clicar no card)"></textarea>
+                  <div class="editor-toolbar" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; background:#f3f4f6; padding:6px 10px; border-radius:6px; border:1px solid #e5e7eb;">
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'b')" title="Negrito"><b>N</b> Negrito</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'i')" title="Itálico"><i>I</i> Itálico</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'u')" title="Sublinhado"><u>S</u> Sublinhado</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'h2')" title="Subtítulo Grande"><b>H2</b> Subtítulo</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'h3')" title="Subtítulo Médio"><b>H3</b> Subtítulo Pequeno</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'uppercase')" title="Transformar em CAIXA ALTA"><b>AA</b> CAIXA ALTA</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'lowercase')" title="Transformar em caixa baixa"><b>aa</b> minúsculo</button>
+                    <button type="button" class="btn-tb" onclick="formatText('full-content', 'quote')" title="Citação / Destaque"><b>"</b> Citação</button>
+                  </div>
+                  <textarea id="full-content" rows="8" placeholder="Digite o texto completo da notícia. Use a barra acima para formatar negrito, subtítulos e destaques."></textarea>
                 </label>
                 <label>Imagem
                   <input type="file" id="image-file" accept="image/*">
