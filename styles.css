@@ -520,6 +520,13 @@ a {
   align-items: start;
 }
 
+.news-main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
 .news-featured {
   position: relative;
   overflow: hidden;
