@@ -237,8 +237,15 @@ function openModal(item) {
 
   document.getElementById('modal-category').textContent = item.category;
   document.getElementById('modal-title').innerHTML = `<a href="/noticia.html?news=${item.id}" target="_blank" style="color:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer;">${item.title}</a>`;
+  const summaryEl = document.getElementById('modal-summary');
+  if (summaryEl) summaryEl.textContent = item.description || '';
   document.getElementById('modal-meta').innerHTML = `<span>${item.source}</span> &middot; <span>${item.datetime || item.created_at}</span>`;
-  contentEl.innerHTML = fullText.split('\n').map(p => `<p>${p}</p>`).join('');
+  
+  contentEl.innerHTML = fullText.split(/\r?\n/).filter(p => p.trim()).map(p => {
+    const trimmed = p.trim();
+    if (/^<(h[1-6]|p|blockquote|ul|ol|li|div)/i.test(trimmed)) return trimmed;
+    return `<p>${trimmed}</p>`;
+  }).join('');
 
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';

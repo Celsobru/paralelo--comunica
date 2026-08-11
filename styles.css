@@ -1025,6 +1025,8 @@ a {
   background-size: cover;
   background-position: center;
   overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 20px;
 }
 
 .modal-image iframe,
@@ -1054,7 +1056,16 @@ a {
   font-size: 1.7rem;
   font-weight: 800;
   line-height: 1.25;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+}
+
+.modal-summary, .news-summary {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 10px 0 14px 0;
+  font-style: italic;
 }
 
 .modal-title a {
