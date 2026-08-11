@@ -1844,14 +1844,24 @@ function formatText(textareaId, action) {
       replacement = selectedText ? `<u>${selectedText}</u>` : '<u>Texto sublinhado</u>';
       break;
     case 'link': {
-      const url = prompt('Digite ou cole a URL do link (ex: https://site.com):');
+      const url = prompt('Digite a URL, E-mail ou WhatsApp (ex: https://site.com ou contato@empresa.com ou 5511999999999):');
       if (!url) return;
       let finalUrl = url.trim();
-      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      if (finalUrl.includes('@') && !finalUrl.startsWith('mailto:')) {
+        finalUrl = 'mailto:' + finalUrl;
+      } else if (/^\+?\d{8,15}$/.test(finalUrl.replace(/\s+/g, ''))) {
+        const cleanPhone = finalUrl.replace(/\D/g, '');
+        finalUrl = `https://wa.me/${cleanPhone}`;
+      } else if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('mailto:') && !finalUrl.startsWith('tel:')) {
         finalUrl = 'https://' + finalUrl;
       }
-      const label = selectedText || prompt('Digite o texto a ser exibido no link:') || finalUrl;
-      replacement = `<a href="${finalUrl}" target="_blank" rel="noopener">${label}</a>`;
+
+      const label = selectedText || prompt('Digite o texto a ser exibido no link:') || finalUrl.replace(/^mailto:/, '');
+      if (finalUrl.startsWith('mailto:') || finalUrl.startsWith('tel:')) {
+        replacement = `<a href="${finalUrl}">${label}</a>`;
+      } else {
+        replacement = `<a href="${finalUrl}" target="_blank" rel="noopener">${label}</a>`;
+      }
       break;
     }
     case 'h2':

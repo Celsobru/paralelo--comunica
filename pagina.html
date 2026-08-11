@@ -214,9 +214,9 @@
         var paragraphs = rawContent.split(/\r?\n/).filter(function(p) { return p.trim(); }).map(function(p) {
           var trimmed = p.trim();
 
-          // 1. Auto-link emails (mailto:)
+          // 1. Auto-link emails (mailto:) - NO target="_blank" so it opens email app directly
           trimmed = trimmed.replace(/(^|[^"'>])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi, function(match, prefix, email) {
-            return prefix + '<a href="mailto:' + email + '" target="_blank" rel="noopener">' + email + '</a>';
+            return prefix + '<a href="mailto:' + email + '">' + email + '</a>';
           });
 
           // 2. Auto-link plain web/whatsapp URLs
@@ -224,8 +224,11 @@
             return prefix + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
           });
 
-          // 3. Ensure any existing <a href="..."> tags open in new tab
+          // 3. Ensure web links open in new tab, but mailto/tel links do NOT use target="_blank"
           trimmed = trimmed.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi, function(match, href, rest) {
+            if (/^(mailto:|tel:)/i.test(href)) {
+              return match.replace(/\s*target=["'][^"']*["']/gi, '');
+            }
             if (!/target=/i.test(match)) {
               return '<a href="' + href + '" target="_blank" rel="noopener"' + rest + '>';
             }
