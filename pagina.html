@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2.1">
+  <link rel="stylesheet" href="styles.css?v=2.3">
   <style>
     .btn-header.btn-announce { background:#16a34a !important; color:#fff !important; border:2px solid #16a34a !important; }
     .btn-header.btn-announce:hover { background:#15803d !important; border-color:#15803d !important; }
@@ -254,6 +254,23 @@
     }
 
     loadPage();
+
+    document.addEventListener('click', function(e) {
+      var a = e.target.closest('a[href^="mailto:"]');
+      if (a) {
+        var email = (a.getAttribute('href') || '').replace(/^mailto:/i, '').trim();
+        if (email) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(email);
+          }
+          var toast = document.createElement('div');
+          toast.className = 'email-toast';
+          toast.innerHTML = '<span>📧 E-mail <b>' + email + '</b> copiado!</span>';
+          document.body.appendChild(toast);
+          setTimeout(function() { toast.remove(); }, 4000);
+        }
+      }
+    });
   </script>
   <script>
     function renderHeaderNewsTicker(newsList) {

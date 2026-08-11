@@ -475,6 +475,23 @@ async function loadDynamicNav() {
 }
 loadDynamicNav();
 
+document.addEventListener('click', function(e) {
+  var a = e.target.closest('a[href^="mailto:"]');
+  if (a) {
+    var email = (a.getAttribute('href') || '').replace(/^mailto:/i, '').trim();
+    if (email) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email);
+      }
+      var toast = document.createElement('div');
+      toast.className = 'email-toast';
+      toast.innerHTML = '<span>📧 E-mail <b>' + email + '</b> copiado!</span>';
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 4000);
+    }
+  }
+});
+
 // Anti-Inspect Security
 document.addEventListener('contextmenu', event => event.preventDefault());
 document.addEventListener('keydown', event => {
