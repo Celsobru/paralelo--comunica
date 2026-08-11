@@ -563,6 +563,21 @@ app.put('/api/admin/ads/:id', requireAdmin, async (req, res) => {
 });
 
 app.delete('/api/admin/ads/:id', requireAdmin, async (req, res) => {
+  try {
+    const ad = await getAsync('SELECT image_url, video_url FROM ads WHERE id = ?', [req.params.id]);
+    if (ad) {
+      const fs = require('fs');
+      const path = require('path');
+      [ad.image_url, ad.video_url].forEach(url => {
+        if (url && url.startsWith('/uploads/')) {
+          const filePath = path.join(__dirname, 'public', url);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        }
+      });
+    }
+  } catch (e) { /* ignore cleanup errors */ }
   await runAsync('DELETE FROM ads WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
 });

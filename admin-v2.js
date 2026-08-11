@@ -380,6 +380,7 @@ let editingNewsId = null;
 let editingClientId = null;
 let editingAdspaceId = null;
 let editingAdId = null;
+let editingAdData = null;
 
 async function editNews(id) {
   const news = await fetchJson(`/api/news/${id}`);
@@ -534,6 +535,7 @@ async function loadAds() {
     btn.addEventListener('click', async () => {
       editingAdId = Number(btn.dataset.id);
       const a = await fetchJson(`/api/admin/ads/${btn.dataset.id}`);
+      editingAdData = a;
       document.getElementById('ad-client').value = a.client_id || '';
       document.getElementById('ad-space').value = a.ad_space_id || '';
       document.getElementById('ad-title').value = a.title || '';
@@ -543,6 +545,16 @@ async function loadAds() {
       document.getElementById('ad-status').value = a.status || 'active';
       const bonusCb = document.getElementById('ad-is-bonus');
       if (bonusCb) bonusCb.checked = !!a.is_bonus;
+
+      const imgPrev = document.getElementById('admin-ad-current-image-preview');
+      if (imgPrev) {
+        imgPrev.innerHTML = a.image_url ? `<span style="font-size:0.85rem;color:var(--text);">🖼 <strong>Imagem atual:</strong> <a href="${a.image_url}" target="_blank" style="color:var(--accent);">Ver imagem atual</a><br><img src="${a.image_url}" style="max-height:60px;border-radius:4px;margin-top:4px;border:1px solid var(--border);"><br><small style="color:var(--muted);">(Se não selecionar um novo arquivo, a imagem acima será mantida)</small></span>` : '';
+      }
+      const vidPrev = document.getElementById('admin-ad-current-video-preview');
+      if (vidPrev) {
+        vidPrev.innerHTML = a.video_url ? `<span style="font-size:0.85rem;color:var(--text);">🎥 <strong>Vídeo atual:</strong> <a href="${a.video_url}" target="_blank" style="color:var(--accent);">Ver vídeo atual</a><br><small style="color:var(--muted);">(Se não selecionar um novo arquivo, o vídeo acima será mantido)</small></span>` : '';
+      }
+
       if (a.video_url) {
         document.querySelector('input[name="admin-ad-type"][value="video"]').checked = true;
       } else if (a.embed_code) {
@@ -778,7 +790,11 @@ document.getElementById('ad-form').addEventListener('submit', async event => {
 
   if (adType === 'image') {
     const file = document.getElementById('ad-image').files[0];
-    if (file) imageUrl = await uploadImage(file);
+    if (file) {
+      imageUrl = await uploadImage(file);
+    } else if (editingAdId && editingAdData && editingAdData.image_url) {
+      imageUrl = editingAdData.image_url;
+    }
   } else if (adType === 'video') {
     const vFile = document.getElementById('ad-video').files[0];
     if (vFile) {
@@ -786,6 +802,8 @@ document.getElementById('ad-form').addEventListener('submit', async event => {
       fd.append('image', vFile);
       const data = await fetchJson('/api/upload', { method: 'POST', body: fd });
       videoUrl = data.url;
+    } else if (editingAdId && editingAdData && editingAdData.video_url) {
+      videoUrl = editingAdData.video_url;
     }
   }
 
@@ -810,6 +828,7 @@ document.getElementById('ad-form').addEventListener('submit', async event => {
       body: JSON.stringify(body),
     });
     editingAdId = null;
+    editingAdData = null;
   } else {
     await fetchJson('/api/admin/ads', {
       method: 'POST',
@@ -820,6 +839,10 @@ document.getElementById('ad-form').addEventListener('submit', async event => {
 
   document.getElementById('ad-form').reset();
   document.getElementById('ad-form').querySelector('button[type="submit"]').textContent = 'Salvar Anuncio';
+  const imgPrev = document.getElementById('admin-ad-current-image-preview');
+  if (imgPrev) imgPrev.innerHTML = '';
+  const vidPrev = document.getElementById('admin-ad-current-video-preview');
+  if (vidPrev) vidPrev.innerHTML = '';
   await loadAds();
 });
 
