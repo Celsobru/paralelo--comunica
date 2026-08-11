@@ -281,10 +281,16 @@
       var fullText = item.full_content || item.description || '';
       var paragraphs = fullText.split(/\r?\n/).filter(function(p) { return p.trim(); }).map(function(p) {
         var trimmed = p.trim();
+        trimmed = trimmed.replace(/(^|[^"'>])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi, function(match, prefix, email) {
+          return prefix + '<a href="mailto:' + email + '">' + email + '</a>';
+        });
         trimmed = trimmed.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/gi, function(match, prefix, url) {
           return prefix + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
         });
         trimmed = trimmed.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi, function(match, href, rest) {
+          if (/^(mailto:|tel:)/i.test(href)) {
+            return match.replace(/\s*target=["'][^"']*["']/gi, '');
+          }
           if (!/target=/i.test(match)) {
             return '<a href="' + href + '" target="_blank" rel="noopener"' + rest + '>';
           }

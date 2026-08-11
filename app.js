@@ -243,10 +243,16 @@ function openModal(item) {
   
   contentEl.innerHTML = fullText.split(/\r?\n/).filter(p => p.trim()).map(p => {
     let trimmed = p.trim();
+    trimmed = trimmed.replace(/(^|[^"'>])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi, (match, prefix, email) => {
+      return prefix + `<a href="mailto:${email}">${email}</a>`;
+    });
     trimmed = trimmed.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/gi, (match, prefix, url) => {
       return prefix + `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
     });
     trimmed = trimmed.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi, (match, href, rest) => {
+      if (/^(mailto:|tel:)/i.test(href)) {
+        return match.replace(/\s*target=["'][^"']*["']/gi, '');
+      }
       if (!/target=/i.test(match)) {
         return `<a href="${href}" target="_blank" rel="noopener"${rest}>`;
       }
