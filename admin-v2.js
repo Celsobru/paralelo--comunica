@@ -1718,6 +1718,17 @@ function formatText(textareaId, action) {
     case 'u':
       replacement = selectedText ? `<u>${selectedText}</u>` : '<u>Texto sublinhado</u>';
       break;
+    case 'link': {
+      const url = prompt('Digite ou cole a URL do link (ex: https://site.com):');
+      if (!url) return;
+      let finalUrl = url.trim();
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = 'https://' + finalUrl;
+      }
+      const label = selectedText || prompt('Digite o texto a ser exibido no link:') || finalUrl;
+      replacement = `<a href="${finalUrl}" target="_blank" rel="noopener">${label}</a>`;
+      break;
+    }
     case 'h2':
       replacement = selectedText ? `\n<h2>${selectedText}</h2>\n` : '\n<h2>SUBTÍTULO DO ARTIGO</h2>\n';
       break;

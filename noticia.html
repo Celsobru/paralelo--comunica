@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.9">
+  <link rel="stylesheet" href="styles.css?v=2.0">
   <style>
     .btn-header.btn-announce { background:#16a34a !important; color:#fff !important; border:2px solid #16a34a !important; }
     .btn-header.btn-announce:hover { background:#15803d !important; border-color:#15803d !important; }
@@ -281,6 +281,16 @@
       var fullText = item.full_content || item.description || '';
       var paragraphs = fullText.split(/\r?\n/).filter(function(p) { return p.trim(); }).map(function(p) {
         var trimmed = p.trim();
+        trimmed = trimmed.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/gi, function(match, prefix, url) {
+          return prefix + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
+        });
+        trimmed = trimmed.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi, function(match, href, rest) {
+          if (!/target=/i.test(match)) {
+            return '<a href="' + href + '" target="_blank" rel="noopener"' + rest + '>';
+          }
+          return match;
+        });
+
         if (/^<(h[1-6]|p|blockquote|ul|ol|li|div)/i.test(trimmed)) {
           return trimmed;
         }
