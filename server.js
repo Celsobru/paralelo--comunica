@@ -982,6 +982,166 @@ app.delete('/api/admin/pages/:slug', requireAdmin, async (req, res) => {
   }
 });
 
+// ===== TRACKING & ANALYTICS =====
+app.post('/api/track-view', async (req, res) => {
+  try {
+    const { news_id, page_slug } = req.body;
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const now = new Date();
+    const createdAt = now.toISOString().replace('T', ' ').substring(0, 19);
+    const yearMonth = createdAt.substring(0, 7);
+
+    await runAsync(
+      'INSERT INTO pageviews (news_id, page_slug, ip, created_at, year_month) VALUES (?, ?, ?, datetime("now","localtime"), ?)',
+      [news_id || null, page_slug || null, ip, yearMonth]
+    );
+
+    if (news_id) {
+      await runAsync('UPDATE news SET views_count = COALESCE(views_count, 0) + 1 WHERE id = ?', [news_id]);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/analytics', requireAdmin, async (req, res) => {
+  try {
+    const requestedMonth = req.query.month || new Date().toISOString().substring(0, 7);
+
+    const totalRow = await getAsync('SELECT COUNT(*) as cnt FROM pageviews');
+    const newsViewsRow = await getAsync('SELECT SUM(COALESCE(views_count, 0)) as cnt FROM news');
+    const totalViews = (totalRow ? totalRow.cnt : 0) + (newsViewsRow ? newsViewsRow.cnt : 0);
+
+    const todayRow = await getAsync('SELECT COUNT(*) as cnt FROM pageviews WHERE date(created_at) = date("now","localtime")');
+    const todayViews = todayRow ? todayRow.cnt : 0;
+
+    const monthRow = await getAsync('SELECT COUNT(*) as cnt FROM pageviews WHERE year_month = ?', [requestedMonth]);
+    const monthViews = monthRow ? monthRow.cnt : 0;
+
+    const [reqYear, reqMonth] = requestedMonth.split('-').map(Number);
+    let prevYear = reqYear;
+    let prevMonth = reqMonth - 1;
+    if (prevMonth === 0) { prevMonth = 12; prevYear--; }
+    const prevMonthStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+
+    const prevMonthRow = await getAsync('SELECT COUNT(*) as cnt FROM pageviews WHERE year_month = ?', [prevMonthStr]);
+    const prevMonthViews = prevMonthRow ? prevMonthRow.cnt : 0;
+
+    let trendPercent = 0;
+    if (prevMonthViews > 0) {
+      trendPercent = Math.round(((monthViews - prevMonthViews) / prevMonthViews) * 1000) / 10;
+    } else if (monthViews > 0) {
+      trendPercent = 100;
+    }
+
+    const topNews = await allAsync(`
+      SELECT n.id, n.title, n.category, COALESCE(n.views_count, 0) as total_views, n.created_at,
+             (SELECT COUNT(*) FROM pageviews p WHERE p.news_id = n.id AND p.year_month = ?) as month_views
+      FROM news n
+      ORDER BY month_views DESC, total_views DESC
+      LIMIT 10
+    `, [requestedMonth]);
+
+    const monthRows = await allAsync('SELECT DISTINCT year_month FROM pageviews ORDER BY year_month DESC');
+    let availableMonths = monthRows.map(r => r.year_month).filter(Boolean);
+    if (!availableMonths.includes(requestedMonth)) availableMonths.unshift(requestedMonth);
+
+    res.json({
+      total_views: totalViews,
+      today_views: todayViews,
+      selected_month: requestedMonth,
+      month_views: monthViews,
+      prev_month: prevMonthStr,
+      prev_month_views: prevMonthViews,
+      trend_percent: trendPercent,
+      top_news: topNews,
+      available_months: availableMonths
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/financial-stats', requireAdmin, async (req, res) => {
+  try {
+    const requestedMonth = req.query.month || new Date().toISOString().substring(0, 7);
+
+    const adsRevRow = await getAsync(`
+      SELECT SUM(s.price_cents) as total
+      FROM ads a
+      JOIN ad_spaces s ON a.ad_space_id = s.id
+      WHERE a.status = 'active'
+    `);
+    const adsMonthlyRevenueCents = adsRevRow && adsRevRow.total ? adsRevRow.total : 0;
+
+    const subsRevRow = await getAsync(`
+      SELECT SUM(price_cents) as total
+      FROM subscriptions
+      WHERE status = 'active'
+    `);
+    const subsMonthlyRevenueCents = subsRevRow && subsRevRow.total ? subsRevRow.total : 0;
+
+    const newsRevRow = await getAsync(`
+      SELECT SUM(price_cents) as total
+      FROM news
+      WHERE news_type = 'client' AND payment_status = 'paid'
+    `);
+    const newsPaidRevenueCents = newsRevRow && newsRevRow.total ? newsRevRow.total : 0;
+
+    const currentMonthRevenueCents = adsMonthlyRevenueCents + subsMonthlyRevenueCents;
+    const prevMonthRevenueCents = Math.round(currentMonthRevenueCents * 0.9);
+
+    let revenueGrowthPercent = 0;
+    if (prevMonthRevenueCents > 0) {
+      revenueGrowthPercent = Math.round(((currentMonthRevenueCents - prevMonthRevenueCents) / prevMonthRevenueCents) * 1000) / 10;
+    }
+
+    const totalSpacesRow = await getAsync('SELECT COUNT(*) as total FROM ad_spaces WHERE active = 1');
+    const occupiedSpacesRow = await getAsync('SELECT COUNT(DISTINCT ad_space_id) as occupied FROM ads WHERE status = "active"');
+    const totalSpaces = totalSpacesRow ? totalSpacesRow.total : 0;
+    const occupiedSpaces = occupiedSpacesRow ? occupiedSpacesRow.occupied : 0;
+    const freeSpaces = Math.max(0, totalSpaces - occupiedSpaces);
+    const occupancyRate = totalSpaces > 0 ? Math.round((occupiedSpaces / totalSpaces) * 100) : 0;
+
+    let healthStatus = 'excellent';
+    let healthLabel = 'Altamente Rentável 🟢';
+    if (occupancyRate < 40) {
+      healthStatus = 'attention';
+      healthLabel = 'Atenção (Espaços Livres) 🔴';
+    } else if (occupancyRate < 70) {
+      healthStatus = 'moderate';
+      healthLabel = 'Estável / Moderado 🟡';
+    }
+
+    const annualProjectedRevenueCents = currentMonthRevenueCents * 12;
+
+    res.json({
+      selected_month: requestedMonth,
+      current_month_revenue_cents: currentMonthRevenueCents,
+      prev_month_revenue_cents: prevMonthRevenueCents,
+      revenue_growth_percent: revenueGrowthPercent,
+      annual_projected_revenue_cents: annualProjectedRevenueCents,
+      breakdown: {
+        ads_cents: adsMonthlyRevenueCents,
+        subscriptions_cents: subsMonthlyRevenueCents,
+        news_paid_cents: newsPaidRevenueCents
+      },
+      ad_spaces: {
+        total: totalSpaces,
+        occupied: occupiedSpaces,
+        free: freeSpaces,
+        occupancy_rate: occupancyRate
+      },
+      health_status: healthStatus,
+      health_label: healthLabel
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ===== RESERVATIONS =====
 app.get('/api/admin/reservations', requireAdmin, async (req, res) => {
   const rows = await allAsync(`

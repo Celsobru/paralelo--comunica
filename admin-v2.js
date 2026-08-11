@@ -5,6 +5,8 @@ const sectionTitles = {
   clients: 'Gerenciar Clientes',
   adspaces: 'Espaços de Anúncio',
   ads: 'Gerenciar Anúncios',
+  analytics: 'Visitas & Métricas de Audiência',
+  financial: 'Termômetro & Painel Financeiro',
   notifications: 'Notificações',
   rssmonitor: 'RSS Monitor',
   payments: 'Configuração de Pagamento',
@@ -23,6 +25,8 @@ const sections = {
   clients: document.getElementById('section-clients'),
   adspaces: document.getElementById('section-adspaces'),
   ads: document.getElementById('section-ads'),
+  analytics: document.getElementById('section-analytics'),
+  financial: document.getElementById('section-financial'),
   notifications: document.getElementById('section-notifications'),
   rssmonitor: document.getElementById('section-rssmonitor'),
   payments: document.getElementById('section-payments'),
@@ -49,6 +53,8 @@ function showSection(name) {
   });
   pageTitle.textContent = sectionTitles[name] || name;
   if (name === 'pages') loadPagesSection();
+  if (name === 'analytics') loadAnalyticsSection();
+  if (name === 'financial') loadFinancialSection();
 }
 
 navItems.forEach(item => {
@@ -1994,4 +2000,159 @@ document.addEventListener('DOMContentLoaded', () => {
       item.addEventListener('click', closeMenu);
     });
   }
+});
+
+async function loadAnalyticsSection(month) {
+  try {
+    const selectedMonth = month || document.getElementById('analytics-month-select').value || new Date().toISOString().substring(0, 7);
+    const res = await fetch(`/api/admin/analytics?month=${selectedMonth}`);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const monthSelect = document.getElementById('analytics-month-select');
+    if (monthSelect && data.available_months) {
+      monthSelect.innerHTML = data.available_months.map(m => {
+        const [year, mo] = m.split('-');
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const label = `${monthNames[parseInt(mo, 10) - 1]} / ${year}`;
+        return `<option value="${m}" ${m === data.selected_month ? 'selected' : ''}>${label}</option>`;
+      }).join('');
+    }
+
+    document.getElementById('stat-total-views').textContent = Number(data.total_views || 0).toLocaleString('pt-BR');
+    document.getElementById('stat-today-views').textContent = Number(data.today_views || 0).toLocaleString('pt-BR');
+    document.getElementById('stat-month-views').textContent = Number(data.month_views || 0).toLocaleString('pt-BR');
+
+    const trendVal = data.trend_percent || 0;
+    const trendEl = document.getElementById('stat-trend-percent');
+    const trendIcon = document.getElementById('stat-trend-icon');
+    if (trendVal >= 0) {
+      trendEl.textContent = `+${trendVal}%`;
+      trendEl.style.color = '#16a34a';
+      if (trendIcon) trendIcon.textContent = '📈';
+    } else {
+      trendEl.textContent = `${trendVal}%`;
+      trendEl.style.color = '#dc2626';
+      if (trendIcon) trendIcon.textContent = '📉';
+    }
+
+    const thermoText = document.getElementById('analytics-thermometer-text');
+    const thermoBadge = document.getElementById('analytics-thermometer-badge');
+    if (trendVal > 15) {
+      thermoText.textContent = `Audiência em forte expansão! Cresceu +${trendVal}% em relação ao mês anterior.`;
+      thermoBadge.innerHTML = `<span style="background:#16a34a;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🚀 CRESCIMENTO ACELERADO (+${trendVal}%)</span>`;
+    } else if (trendVal >= 0) {
+      thermoText.textContent = `Audiência estável e saudável com alta de +${trendVal}%.`;
+      thermoBadge.innerHTML = `<span style="background:#2563eb;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🟢 TENDÊNCIA POSITIVA (+${trendVal}%)</span>`;
+    } else {
+      thermoText.textContent = `Queda de ${trendVal}% na audiência em relação ao mês anterior.`;
+      thermoBadge.innerHTML = `<span style="background:#dc2626;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🔴 QUEDA DE AUDIÊNCIA (${trendVal}%)</span>`;
+    }
+
+    const topNewsTbody = document.getElementById('top-news-table');
+    if (!data.top_news || data.top_news.length === 0) {
+      topNewsTbody.innerHTML = '<tr><td colspan="7" class="empty-state">Nenhuma notícia acessada ainda no período.</td></tr>';
+      return;
+    }
+
+    topNewsTbody.innerHTML = data.top_news.map((item, idx) => `
+      <tr>
+        <td><strong>#${idx + 1}</strong></td>
+        <td><strong style="color:var(--text);">${escapeHtml(item.title)}</strong></td>
+        <td><span class="badge" style="background:var(--bg-secondary);color:var(--text);">${escapeHtml(item.category || 'Geral')}</span></td>
+        <td><strong style="color:#2563eb;">${Number(item.month_views || 0).toLocaleString('pt-BR')} visualizações</strong></td>
+        <td>${Number(item.total_views || 0).toLocaleString('pt-BR')}</td>
+        <td>${item.created_at ? item.created_at.substring(0, 10) : '-'}</td>
+        <td>
+          <a href="/noticia.html?news=${item.id}" target="_blank" class="btn-action primary" style="text-decoration:none;padding:4px 10px;font-size:0.8rem;">Ver Notícia</a>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Erro ao carregar analytics:', err);
+  }
+}
+
+async function loadFinancialSection(month) {
+  try {
+    const selectedMonth = month || document.getElementById('financial-month-select').value || new Date().toISOString().substring(0, 7);
+    const res = await fetch(`/api/admin/financial-stats?month=${selectedMonth}`);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const monthSelect = document.getElementById('financial-month-select');
+    if (monthSelect) {
+      const now = new Date();
+      const monthsList = [];
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const ym = d.toISOString().substring(0, 7);
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const label = `${monthNames[d.getMonth()]} / ${d.getFullYear()}`;
+        monthsList.push(`<option value="${ym}" ${ym === data.selected_month ? 'selected' : ''}>${label}</option>`);
+      }
+      monthSelect.innerHTML = monthsList.join('');
+    }
+
+    const formatBrl = cents => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    document.getElementById('fin-stat-current-revenue').textContent = formatBrl(data.current_month_revenue_cents || 0);
+    document.getElementById('fin-stat-arr').textContent = formatBrl(data.annual_projected_revenue_cents || 0);
+
+    const growth = data.revenue_growth_percent || 0;
+    const growthEl = document.getElementById('fin-stat-growth');
+    if (growth >= 0) {
+      growthEl.textContent = `+${growth}%`;
+      growthEl.style.color = '#16a34a';
+    } else {
+      growthEl.textContent = `${growth}%`;
+      growthEl.style.color = '#dc2626';
+    }
+
+    const occRate = data.ad_spaces ? data.ad_spaces.occupancy_rate : 0;
+    document.getElementById('fin-stat-occupancy').textContent = `${occRate}%`;
+
+    const healthBadge = document.getElementById('fin-health-badge');
+    const healthBar = document.getElementById('fin-health-bar');
+    const healthDesc = document.getElementById('fin-health-description');
+
+    healthBar.style.width = `${Math.min(100, Math.max(10, occRate))}%`;
+    if (data.health_status === 'excellent') {
+      healthBadge.innerHTML = 'Altamente Rentável 🟢';
+      healthBadge.style.background = '#16a34a';
+      healthBar.style.background = 'linear-gradient(90deg, #16a34a, #22c55e)';
+      healthDesc.textContent = `Excelente taxa de ocupação dos banners (${occRate}%). O portal está gerando receita constante.`;
+    } else if (data.health_status === 'moderate') {
+      healthBadge.innerHTML = 'Estável / Moderado 🟡';
+      healthBadge.style.background = '#eab308';
+      healthBar.style.background = 'linear-gradient(90deg, #ca8a04, #eab308)';
+      healthDesc.textContent = `Taxa de ocupação moderada (${occRate}%). Há espaço para novos anunciantes.`;
+    } else {
+      healthBadge.innerHTML = 'Atenção (Espaços Livres) 🔴';
+      healthBadge.style.background = '#dc2626';
+      healthBar.style.background = 'linear-gradient(90deg, #dc2626, #ef4444)';
+      healthDesc.textContent = `Baixa ocupação dos banners (${occRate}%). Foco na captação de novos patrocinadores.`;
+    }
+
+    document.getElementById('fin-breakdown-ads').textContent = formatBrl(data.breakdown.ads_cents || 0);
+    document.getElementById('fin-breakdown-subs').textContent = formatBrl(data.breakdown.subscriptions_cents || 0);
+    document.getElementById('fin-breakdown-news').textContent = formatBrl(data.breakdown.news_paid_cents || 0);
+
+    if (data.ad_spaces) {
+      document.getElementById('fin-space-total').textContent = data.ad_spaces.total;
+      document.getElementById('fin-space-occupied').textContent = data.ad_spaces.occupied;
+      document.getElementById('fin-space-free').textContent = data.ad_spaces.free;
+    }
+
+  } catch (err) {
+    console.error('Erro ao carregar dados financeiros:', err);
+  }
+}
+
+document.getElementById('analytics-month-select')?.addEventListener('change', e => {
+  loadAnalyticsSection(e.target.value);
+});
+
+document.getElementById('financial-month-select')?.addEventListener('change', e => {
+  loadFinancialSection(e.target.value);
 });

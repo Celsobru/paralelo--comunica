@@ -276,6 +276,12 @@
         return;
       }
 
+      fetch('/api/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ news_id: newsId })
+      }).catch(function(){});
+
       document.title = item.title + ' - Paralelo Comunica';
 
       var fullText = item.full_content || item.description || '';
