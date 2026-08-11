@@ -488,6 +488,7 @@ document.addEventListener('click', function(e) {
       toast.innerHTML = '<span>📧 E-mail <b>' + email + '</b> copiado!</span>';
       document.body.appendChild(toast);
       setTimeout(function() { toast.remove(); }, 4000);
+      setTimeout(function() { window.location.href = 'mailto:' + email; }, 100);
     }
   }
 });
