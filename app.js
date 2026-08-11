@@ -242,7 +242,17 @@ function openModal(item) {
   document.getElementById('modal-meta').innerHTML = `<span>${item.source}</span> &middot; <span>${item.datetime || item.created_at}</span>`;
   
   contentEl.innerHTML = fullText.split(/\r?\n/).filter(p => p.trim()).map(p => {
-    const trimmed = p.trim();
+    let trimmed = p.trim();
+    trimmed = trimmed.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/gi, (match, prefix, url) => {
+      return prefix + `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+    });
+    trimmed = trimmed.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi, (match, href, rest) => {
+      if (!/target=/i.test(match)) {
+        return `<a href="${href}" target="_blank" rel="noopener"${rest}>`;
+      }
+      return match;
+    });
+
     if (/^<(h[1-6]|p|blockquote|ul|ol|li|div)/i.test(trimmed)) return trimmed;
     return `<p>${trimmed}</p>`;
   }).join('');

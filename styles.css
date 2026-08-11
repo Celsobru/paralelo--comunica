@@ -1096,6 +1096,21 @@ a {
   margin-bottom: 16px;
 }
 
+.modal-content a,
+.news-body a {
+  color: #2563eb !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  transition: color 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.modal-content a:hover,
+.news-body a:hover {
+  color: #1d4ed8 !important;
+}
+
 .modal-content p:last-child {
   margin-bottom: 0;
 }
