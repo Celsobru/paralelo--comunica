@@ -176,6 +176,12 @@ db.serialize(() => {
     }
   });
 
+  db.all('PRAGMA table_info(ads)', (err, cols) => {
+    if (!err && cols && !cols.some(c => c.name === 'is_bonus')) {
+      db.run('ALTER TABLE ads ADD COLUMN is_bonus INTEGER DEFAULT 0');
+    }
+  });
+
   db.run(`ALTER TABLE news ADD COLUMN full_content TEXT DEFAULT ''`, () => {});
 
   db.run(`ALTER TABLE news ADD COLUMN full_content TEXT DEFAULT ''`, () => {});

@@ -535,10 +535,10 @@ app.get('/api/admin/ads', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/ads', requireAdmin, async (req, res) => {
-  const { client_id, ad_space_id, title, link, image_url, embed_code, video_url, start_date, end_date, status } = req.body;
+  const { client_id, ad_space_id, title, link, image_url, embed_code, video_url, start_date, end_date, status, is_bonus } = req.body;
   const result = await runAsync(
-    'INSERT INTO ads (client_id, ad_space_id, title, link, image_url, embed_code, video_url, status, start_date, end_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now","localtime"))',
-    [client_id, ad_space_id, title, link, image_url, embed_code, video_url || '', status || 'active', start_date, end_date]
+    'INSERT INTO ads (client_id, ad_space_id, title, link, image_url, embed_code, video_url, status, start_date, end_date, is_bonus, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now","localtime"))',
+    [client_id, ad_space_id, title, link, image_url, embed_code, video_url || '', status || 'active', start_date, end_date, is_bonus ? 1 : 0]
   );
   res.json({ id: result.lastID });
 });
@@ -554,10 +554,10 @@ app.get('/api/admin/ads/:id', requireAdmin, async (req, res) => {
 
 app.put('/api/admin/ads/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { client_id, ad_space_id, title, link, image_url, embed_code, video_url, start_date, end_date, status } = req.body;
+  const { client_id, ad_space_id, title, link, image_url, embed_code, video_url, start_date, end_date, status, is_bonus } = req.body;
   await runAsync(
-    'UPDATE ads SET client_id = ?, ad_space_id = ?, title = ?, link = ?, image_url = ?, embed_code = ?, video_url = ?, start_date = ?, end_date = ?, status = ? WHERE id = ?',
-    [client_id, ad_space_id, title, link, image_url, embed_code, video_url || '', start_date, end_date, status, id]
+    'UPDATE ads SET client_id = ?, ad_space_id = ?, title = ?, link = ?, image_url = ?, embed_code = ?, video_url = ?, start_date = ?, end_date = ?, status = ?, is_bonus = ? WHERE id = ?',
+    [client_id, ad_space_id, title, link, image_url, embed_code, video_url || '', start_date, end_date, status, is_bonus ? 1 : 0, id]
   );
   res.json({ ok: true });
 });
@@ -1072,7 +1072,7 @@ app.get('/api/admin/financial-stats', requireAdmin, async (req, res) => {
       SELECT SUM(s.price_cents) as total
       FROM ads a
       JOIN ad_spaces s ON a.ad_space_id = s.id
-      WHERE a.status = 'active'
+      WHERE a.status = 'active' AND (a.is_bonus IS NULL OR a.is_bonus = 0)
     `);
     const adsMonthlyRevenueCents = adsRevRow && adsRevRow.total ? adsRevRow.total : 0;
 
@@ -1117,6 +1117,18 @@ app.get('/api/admin/financial-stats', requireAdmin, async (req, res) => {
 
     const annualProjectedRevenueCents = currentMonthRevenueCents * 12;
 
+    const activeAdsDetails = await allAsync(`
+      SELECT a.id, a.title, COALESCE(a.is_bonus, 0) as is_bonus, a.status,
+             COALESCE(c.company_name, 'Direto/Sem Empresa') as client_name,
+             COALESCE(s.name, 'Espaço Desconhecido') as space_name,
+             COALESCE(s.price_cents, 0) as price_cents
+      FROM ads a
+      LEFT JOIN clients c ON a.client_id = c.id
+      LEFT JOIN ad_spaces s ON a.ad_space_id = s.id
+      WHERE a.status = 'active'
+      ORDER BY a.is_bonus ASC, a.created_at DESC
+    `);
+
     res.json({
       selected_month: requestedMonth,
       current_month_revenue_cents: currentMonthRevenueCents,
@@ -1134,6 +1146,7 @@ app.get('/api/admin/financial-stats', requireAdmin, async (req, res) => {
         free: freeSpaces,
         occupancy_rate: occupancyRate
       },
+      active_ads: activeAdsDetails,
       health_status: healthStatus,
       health_label: healthLabel
     });
