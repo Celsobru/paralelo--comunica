@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/uploads/logo.png">
-  <link rel="stylesheet" href="styles.css?v=2.0">
+  <link rel="stylesheet" href="styles.css?v=2.1">
 </head>
 <body>
   <div class="ticker-bar">
@@ -242,11 +242,16 @@
               .filter(item => item.label && item.label.trim())
               .map(item => {
                 const isActive = activeParam && item.url && item.url.includes('category=' + activeParam);
+                const isExtPage = item.url && (item.url.startsWith('http') || item.url.includes('pagina.html'));
+                const targetAttr = isExtPage ? ' target="_blank" rel="noopener"' : '';
                 if (item.subs && item.subs.length > 0) {
-                  const subItems = item.subs.map(s => `<li><a href="${s.url || '/'}">${s.label}</a></li>`).join('');
-                  return `<li class="has-dropdown"><a href="${item.url || '/'}"${isActive ? ' class="active"' : ''}>${item.label} <span class="arrow-down">&#9662;</span></a><ul class="dropdown-menu">${subItems}</ul></li>`;
+                  const subItems = item.subs.map(s => {
+                    const sTarget = (s.url && (s.url.startsWith('http') || s.url.includes('pagina.html'))) ? ' target="_blank" rel="noopener"' : '';
+                    return `<li><a href="${s.url || '/'}"${sTarget}>${s.label}</a></li>`;
+                  }).join('');
+                  return `<li class="has-dropdown"><a href="${item.url || '/'}"${isActive ? ' class="active"' : ''}${targetAttr}>${item.label} <span class="arrow-down">&#9662;</span></a><ul class="dropdown-menu">${subItems}</ul></li>`;
                 }
-                return `<li><a href="${item.url || '/'}"${isActive ? ' class="active"' : ''}>${item.label}</a></li>`;
+                return `<li><a href="${item.url || '/'}"${isActive ? ' class="active"' : ''}${targetAttr}>${item.label}</a></li>`;
               }).join('');
             navList.innerHTML = '<li><a href="/" class="live-indicator">Ao Vivo</a></li>' +
               '<li><a href="/"' + (!activeParam ? ' class="active"' : '') + '>Inicio</a></li>' +

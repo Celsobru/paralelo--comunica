@@ -48,6 +48,7 @@ function showSection(name) {
     item.classList.toggle('active', item.dataset.section === name);
   });
   pageTitle.textContent = sectionTitles[name] || name;
+  if (name === 'pages') loadPagesSection();
 }
 
 navItems.forEach(item => {
@@ -1472,30 +1473,152 @@ document.getElementById('site-config-form').addEventListener('submit', async eve
 });
 
 // ===== PÁGINAS INSTITUCIONAIS =====
-async function loadPage(slug) {
+// ===== PÁGINAS INSTITUCIONAIS E PERSONALIZADAS =====
+let allPagesList = [];
+
+async function loadPagesSection() {
   try {
-    const page = await fetchJson('/api/admin/pages/' + slug);
-    document.getElementById('page-slug').value = slug;
-    document.getElementById('page-title-input').value = page.title || '';
-    document.getElementById('page-content-input').value = page.content || '';
-    document.getElementById('page-preview-link').href = '/pagina.html?page=' + slug;
+    const pages = await fetchJson('/api/admin/pages');
+    allPagesList = pages;
+    renderPagesTabs(pages);
+    const activeTab = document.querySelector('#pages-tab-container .btn-page-tab.active');
+    const slugToLoad = activeTab ? activeTab.dataset.slug : 'sobre';
+    loadPageData(slugToLoad);
   } catch(e) {
-    console.error('Erro ao carregar página:', e);
+    console.error('Erro ao carregar lista de páginas:', e);
   }
 }
 
-document.querySelectorAll('.btn-page-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.btn-page-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    loadPage(btn.dataset.page);
+function renderPagesTabs(pages) {
+  const container = document.getElementById('pages-tab-container');
+  if (!container) return;
+
+  const defaultSlugs = ['sobre', 'contato', 'anuncie', 'privacidade'];
+  const defaultMap = {
+    sobre: 'Sobre Nós',
+    contato: 'Contato',
+    anuncie: 'Anuncie',
+    privacidade: 'Privacidade'
+  };
+
+  let html = defaultSlugs.map(slug => {
+    const p = pages.find(item => item.slug === slug);
+    const title = (p && p.title) ? p.title : defaultMap[slug];
+    return `<button type="button" class="btn btn-page-tab" data-slug="${slug}">${title}</button>`;
+  }).join('');
+
+  const customPages = pages.filter(item => !defaultSlugs.includes(item.slug));
+  customPages.forEach(p => {
+    html += `<button type="button" class="btn btn-page-tab" data-slug="${p.slug}">${p.title || p.slug}</button>`;
+  });
+
+  html += `<button type="button" class="btn btn-success" id="btn-create-new-page" style="margin-left:auto;background:#16a34a;color:#fff;font-weight:700;">+ Criar Nova Página</button>`;
+  container.innerHTML = html;
+
+  container.querySelectorAll('.btn-page-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.btn-page-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadPageData(btn.dataset.slug);
+    });
+  });
+
+  document.getElementById('btn-create-new-page')?.addEventListener('click', prepareNewPageForm);
+}
+
+function prepareNewPageForm() {
+  document.querySelectorAll('#pages-tab-container .btn-page-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-slug').value = '';
+  document.getElementById('page-is-custom').value = '1';
+  document.getElementById('page-title-input').value = '';
+  document.getElementById('page-slug-custom-input').value = '';
+  document.getElementById('page-content-input').value = '';
+  document.getElementById('page-slug-label').style.display = 'block';
+  document.getElementById('btn-delete-page').style.display = 'none';
+  document.getElementById('page-url-preview').textContent = '/pagina.html?page=minha-nova-pagina';
+  document.getElementById('page-preview-link').href = '#';
+  document.getElementById('page-title-input').focus();
+}
+
+async function loadPageData(slug) {
+  const defaultSlugs = ['sobre', 'contato', 'anuncie', 'privacidade'];
+  const isDefault = defaultSlugs.includes(slug);
+  try {
+    const page = await fetchJson('/api/admin/pages/' + slug);
+    document.getElementById('page-slug').value = slug;
+    document.getElementById('page-is-custom').value = isDefault ? '0' : '1';
+    document.getElementById('page-title-input').value = page.title || '';
+    document.getElementById('page-content-input').value = page.content || '';
+    document.getElementById('page-preview-link').href = '/pagina.html?page=' + slug;
+    document.getElementById('page-url-preview').textContent = '/pagina.html?page=' + slug;
+
+    if (!isDefault) {
+      document.getElementById('page-slug-label').style.display = 'block';
+      document.getElementById('page-slug-custom-input').value = slug;
+      document.getElementById('btn-delete-page').style.display = 'inline-block';
+    } else {
+      document.getElementById('page-slug-label').style.display = 'none';
+      document.getElementById('btn-delete-page').style.display = 'none';
+    }
+
+    const tabBtn = document.querySelector(`#pages-tab-container .btn-page-tab[data-slug="${slug}"]`);
+    if (tabBtn) {
+      document.querySelectorAll('#pages-tab-container .btn-page-tab').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+    }
+  } catch(e) {
+    console.error('Erro ao carregar dados da página:', e);
+  }
+}
+
+document.getElementById('page-slug-custom-input')?.addEventListener('input', e => {
+  let val = e.target.value.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+  document.getElementById('page-url-preview').textContent = '/pagina.html?page=' + (val || 'slug');
+});
+
+document.getElementById('page-title-input')?.addEventListener('input', e => {
+  if (document.getElementById('page-is-custom')?.value === '1' && !document.getElementById('page-slug').value) {
+    let slugVal = e.target.value.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    document.getElementById('page-slug-custom-input').value = slugVal;
+    document.getElementById('page-url-preview').textContent = '/pagina.html?page=' + (slugVal || 'slug');
+  }
+});
+
+document.getElementById('btn-copy-page-link')?.addEventListener('click', () => {
+  let slug = document.getElementById('page-slug').value || document.getElementById('page-slug-custom-input').value;
+  if (!slug) slug = document.getElementById('page-title-input').value.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+  if (!slug) return alert('Por favor, informe um título ou identificador para a página.');
+  const pageUrl = '/pagina.html?page=' + slug;
+  navigator.clipboard.writeText(pageUrl).then(() => {
+    alert('Link copiado com sucesso:\n' + pageUrl + '\n\nAgora você pode colar este link no Menu de Navegação!');
+  }).catch(() => {
+    prompt('Copie o link abaixo para colar no Menu de Navegação:', pageUrl);
   });
 });
 
-document.getElementById('page-form').addEventListener('submit', async event => {
+document.getElementById('btn-delete-page')?.addEventListener('click', async () => {
+  const slug = document.getElementById('page-slug').value;
+  if (!slug) return;
+  if (!confirm(`Tem certeza que deseja excluir a página "${slug}"?`)) return;
+  try {
+    await fetchJson('/api/admin/pages/' + slug, { method: 'DELETE' });
+    alert('Página excluída com sucesso!');
+    await loadPagesSection();
+  } catch(e) {
+    alert('Erro ao excluir página: ' + e.message);
+  }
+});
+
+document.getElementById('page-form')?.addEventListener('submit', async event => {
   event.preventDefault();
   try {
-    const slug = document.getElementById('page-slug').value;
+    let slug = document.getElementById('page-slug').value;
+    if (!slug || document.getElementById('page-is-custom').value === '1') {
+      const customSlugInput = document.getElementById('page-slug-custom-input').value;
+      slug = customSlugInput.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    }
+    if (!slug) throw new Error('Por favor, informe um identificador único (slug) para a página.');
+
     await fetchJson('/api/admin/pages/' + slug, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -1505,6 +1628,8 @@ document.getElementById('page-form').addEventListener('submit', async event => {
       }),
     });
     alert('Página salva com sucesso!');
+    await loadPagesSection();
+    loadPageData(slug);
   } catch(e) {
     alert('Erro: ' + e.message);
   }

@@ -951,12 +951,35 @@ app.get('/api/admin/pages/:slug', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/pages/:slug', requireAdmin, async (req, res) => {
-  const { title, content } = req.body;
-  await runAsync(
-    'UPDATE pages SET title=?, content=?, updated_at=datetime("now","localtime") WHERE slug=?',
-    [title||'', content||'', req.params.slug]
-  );
-  res.json({ ok: true });
+  try {
+    const { title, content } = req.body;
+    const slug = req.params.slug;
+    const existing = await getAsync('SELECT id FROM pages WHERE slug = ?', [slug]);
+    if (existing) {
+      await runAsync(
+        'UPDATE pages SET title=?, content=?, updated_at=datetime("now","localtime") WHERE slug=?',
+        [title || '', content || '', slug]
+      );
+    } else {
+      await runAsync(
+        'INSERT INTO pages (slug, title, content, updated_at) VALUES (?, ?, ?, datetime("now","localtime"))',
+        [slug, title || slug, content || '']
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/pages/:slug', requireAdmin, async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    await runAsync('DELETE FROM pages WHERE slug = ?', [slug]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ===== RESERVATIONS =====
