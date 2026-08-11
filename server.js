@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
@@ -66,6 +67,111 @@ app.use(session({
 }));
 
 app.use('/uploads', express.static(uploadDir));
+
+// Open Graph / WhatsApp Preview SSR for noticia.html
+app.get('/noticia.html', async (req, res, next) => {
+  const newsId = req.query.news;
+  const filePath = path.join(__dirname, 'noticia.html');
+
+  fs.readFile(filePath, 'utf8', async (err, html) => {
+    if (err) return next();
+    if (!newsId) return res.send(html);
+
+    try {
+      const item = await getAsync('SELECT * FROM news WHERE id = ?', [newsId]);
+      if (!item) return res.send(html);
+
+      const siteConfig = await getAsync('SELECT site_name FROM site_config WHERE id = 1');
+      const siteName = (siteConfig && siteConfig.site_name) ? siteConfig.site_name : 'Paralelo Comunica';
+
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.get('host') || 'paralelocomunica.com.br';
+      const baseUrl = `${protocol}://${host}`;
+
+      let imageUrl = item.image_url || item.image || `${baseUrl}/uploads/logo.png`;
+      if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        imageUrl = baseUrl + (imageUrl.startsWith('/') ? '' : '/') + imageUrl;
+      }
+
+      const canonicalUrl = `${baseUrl}/noticia.html?news=${item.id}`;
+      const title = item.title ? item.title.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : siteName;
+      const description = item.description ? item.description.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+      const ogTags = `
+    <!-- Open Graph / WhatsApp Social Sharing Tags -->
+    <title>${title} - ${siteName}</title>
+    <meta name="description" content="${description}">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="${siteName}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:image:secure_url" content="${imageUrl}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="${canonicalUrl}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${title}">
+    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:image" content="${imageUrl}">
+      `;
+
+      let modifiedHtml = html.replace(/<title>.*?<\/title>/i, '');
+      modifiedHtml = modifiedHtml.replace('</head>', `${ogTags}\n</head>`);
+      return res.send(modifiedHtml);
+    } catch (e) {
+      return res.send(html);
+    }
+  });
+});
+
+// Open Graph / WhatsApp Preview SSR for index.html / Home
+app.get(['/', '/index.html'], async (req, res, next) => {
+  const filePath = path.join(__dirname, 'index.html');
+  fs.readFile(filePath, 'utf8', async (err, html) => {
+    if (err) return next();
+    try {
+      const siteConfig = await getAsync('SELECT site_name, site_description, site_slogan FROM site_config WHERE id = 1');
+      const siteName = (siteConfig && siteConfig.site_name) ? siteConfig.site_name : 'Paralelo Comunica';
+      const siteDesc = (siteConfig && siteConfig.site_description) ? siteConfig.site_description : 'O seu portal de notícias com conteúdo atualizado e reportagem 24 horas do Brasil e do Mundo.';
+
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.get('host') || 'paralelocomunica.com.br';
+      const baseUrl = `${protocol}://${host}`;
+      const imageUrl = `${baseUrl}/uploads/logo.png`;
+      const canonicalUrl = `${baseUrl}/`;
+
+      const title = `${siteName} - Notícias ao Vivo`;
+      const description = siteDesc.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const ogTags = `
+    <!-- Open Graph / WhatsApp Social Sharing Tags -->
+    <title>${title}</title>
+    <meta name="description" content="${description}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="${siteName}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:image:secure_url" content="${imageUrl}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="${canonicalUrl}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${title}">
+    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:image" content="${imageUrl}">
+      `;
+
+      let modifiedHtml = html.replace(/<title>.*?<\/title>/i, '');
+      modifiedHtml = modifiedHtml.replace('</head>', `${ogTags}\n</head>`);
+      return res.send(modifiedHtml);
+    } catch (e) {
+      return res.send(html);
+    }
+  });
+});
+
 app.use(express.static(path.join(__dirname)));
 
 function requireAuth(req, res, next) {
