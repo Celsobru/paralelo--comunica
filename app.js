@@ -266,6 +266,12 @@ function openModal(item) {
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
   renderModalAds();
+
+  fetch('/api/track-view', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ news_id: item.id })
+  }).catch(()=>{});
 }
 
 function closeModal() {

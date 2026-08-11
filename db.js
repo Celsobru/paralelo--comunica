@@ -161,6 +161,23 @@ db.serialize(() => {
     updated_at TEXT
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS pageviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    news_id INTEGER DEFAULT NULL,
+    page_slug TEXT DEFAULT NULL,
+    ip TEXT,
+    created_at TEXT NOT NULL,
+    year_month TEXT NOT NULL
+  )`);
+
+  db.all('PRAGMA table_info(news)', (err, cols) => {
+    if (!err && cols && !cols.some(c => c.name === 'views_count')) {
+      db.run('ALTER TABLE news ADD COLUMN views_count INTEGER DEFAULT 0');
+    }
+  });
+
+  db.run(`ALTER TABLE news ADD COLUMN full_content TEXT DEFAULT ''`, () => {});
+
   db.run(`ALTER TABLE news ADD COLUMN full_content TEXT DEFAULT ''`, () => {});
   db.run(`ALTER TABLE news ADD COLUMN ad_space_id INTEGER DEFAULT NULL`, () => {});
   db.run(`ALTER TABLE news ADD COLUMN video_url TEXT DEFAULT ''`, () => {});

@@ -47,6 +47,14 @@
           <span class="nav-icon">&#9733;</span>
           <span>Anúncios</span>
         </button>
+        <button class="sidebar-nav-item" data-section="analytics">
+          <span class="nav-icon">📊</span>
+          <span>Visitas & Métricas</span>
+        </button>
+        <button class="sidebar-nav-item" data-section="financial" data-role="master">
+          <span class="nav-icon">💰</span>
+          <span>Financeiro</span>
+        </button>
         <button class="sidebar-nav-item" data-section="notifications">
           <span class="nav-icon">&#9993;</span>
           <span>Notificações</span>
@@ -1044,6 +1052,180 @@
                   <tbody id="subscribers-table"></tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISITAS & MÉTRICAS -->
+        <section id="section-analytics" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+              <div>
+                <h2>Métricas & Audiência do Portal</h2>
+                <span class="panel-subtitle">Acompanhe as visualizações reais, matérias mais lidas e o termômetro de crescimento</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <label style="margin:0;font-size:0.85rem;font-weight:600;">Filtrar Mês:</label>
+                <select id="analytics-month-select" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-secondary,#fff);color:var(--text);font-weight:600;">
+                  <!-- Carregado via JS -->
+                </select>
+              </div>
+            </div>
+            <div class="admin-panel-body">
+              <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:24px;">
+                <div class="stat-card">
+                  <div class="stat-icon blue">👁</div>
+                  <span class="stat-value" id="stat-total-views">0</span>
+                  <span class="stat-label">Total Acumulado</span>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon green">📅</div>
+                  <span class="stat-value" id="stat-today-views">0</span>
+                  <span class="stat-label">Visualizações Hoje</span>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon purple">📊</div>
+                  <span class="stat-value" id="stat-month-views">0</span>
+                  <span class="stat-label">Visualizações do Mês</span>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon yellow" id="stat-trend-icon">📈</div>
+                  <span class="stat-value" id="stat-trend-percent">0%</span>
+                  <span class="stat-label" id="stat-trend-label">Comparado ao Mês Anterior</span>
+                </div>
+              </div>
+
+              <!-- Termômetro de Audiência -->
+              <div style="background:var(--bg-secondary,#f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div>
+                  <h3 style="margin:0 0 4px 0;font-size:1.05rem;color:var(--text);">Termômetro de Desempenho do Site</h3>
+                  <span style="font-size:0.88rem;color:var(--muted);" id="analytics-thermometer-text">Comparação com o mês anterior...</span>
+                </div>
+                <div id="analytics-thermometer-badge">
+                  <!-- Badge JS -->
+                </div>
+              </div>
+
+              <!-- Tabela Notícias Mais Lidas -->
+              <div style="margin-top:20px;">
+                <h3 style="font-size:1.1rem;margin-bottom:12px;color:var(--text);">🔥 Top 10 Notícias Mais Acessadas do Mês</h3>
+                <div class="table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Título da Notícia</th>
+                        <th>Categoria</th>
+                        <th>Visualizações no Mês</th>
+                        <th>Total Geral</th>
+                        <th>Data</th>
+                        <th>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody id="top-news-table">
+                      <tr><td colspan="7" class="empty-state">Carregando métricas...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAINEL FINANCEIRO -->
+        <section id="section-financial" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+              <div>
+                <h2>Termômetro & Painel Financeiro</h2>
+                <span class="panel-subtitle">Monitore os ganhos de anúncios, assinaturas, taxa de ocupação dos banners e projeções</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <label style="margin:0;font-size:0.85rem;font-weight:600;">Filtrar Mês:</label>
+                <select id="financial-month-select" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-secondary,#fff);color:var(--text);font-weight:600;">
+                  <!-- Carregado via JS -->
+                </select>
+              </div>
+            </div>
+            <div class="admin-panel-body">
+              <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:24px;">
+                <div class="stat-card">
+                  <div class="stat-icon green">💵</div>
+                  <span class="stat-value" id="fin-stat-current-revenue">R$ 0,00</span>
+                  <span class="stat-label">Receita Mensal Atual</span>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon blue">📈</div>
+                  <span class="stat-value" id="fin-stat-growth">0%</span>
+                  <span class="stat-label">Comparado ao Mês Anterior</span>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon purple">🎯</div>
+                  <span class="stat-value" id="fin-stat-occupancy">0%</span>
+                  <span class="stat-label">Ocupação de Banners</span>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon yellow">💎</div>
+                  <span class="stat-value" id="fin-stat-arr">R$ 0,00</span>
+                  <span class="stat-label">Projeção Anual (ARR)</span>
+                </div>
+              </div>
+
+              <!-- Termômetro de Saúde Financeira -->
+              <div style="background:var(--bg-secondary,#f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+                  <div>
+                    <h3 style="margin:0 0 4px 0;font-size:1.1rem;color:var(--text);">Termômetro de Saúde do Negócio</h3>
+                    <span style="font-size:0.88rem;color:var(--muted);" id="fin-health-description">Nível de monetização e ocupação de espaços publicitários</span>
+                  </div>
+                  <div id="fin-health-badge" style="font-size:0.95rem;font-weight:700;padding:6px 16px;border-radius:20px;background:#16a34a;color:#fff;">
+                    Altamente Rentável 🟢
+                  </div>
+                </div>
+                <div style="width:100%;height:14px;background:#e2e8f0;border-radius:10px;overflow:hidden;position:relative;">
+                  <div id="fin-health-bar" style="width:0%;height:100%;background:linear-gradient(90deg, #16a34a, #22c55e);transition:width 0.5s ease;"></div>
+                </div>
+              </div>
+
+              <!-- Origem das Receitas & Espaços Publicitários -->
+              <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:20px;margin-top:20px;">
+                <div style="background:var(--bg-secondary,#fff);border:1px solid var(--border);border-radius:10px;padding:18px;">
+                  <h3 style="font-size:1.05rem;margin:0 0 14px 0;color:var(--text);">💰 Fontes de Receita no Mês</h3>
+                  <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                      <span>📢 Anúncios Banners</span>
+                      <strong id="fin-breakdown-ads" style="color:#16a34a;">R$ 0,00</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                      <span>⭐ Assinaturas de Leitores</span>
+                      <strong id="fin-breakdown-subs" style="color:#2563eb;">R$ 0,00</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;">
+                      <span>✍️ Notícias Pagas (Clientes)</span>
+                      <strong id="fin-breakdown-news" style="color:#9333ea;">R$ 0,00</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="background:var(--bg-secondary,#fff);border:1px solid var(--border);border-radius:10px;padding:18px;">
+                  <h3 style="font-size:1.05rem;margin:0 0 14px 0;color:var(--text);">📌 Status dos Espaços Publicitários</h3>
+                  <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                      <span>Total de Banners Cadastrados</span>
+                      <strong id="fin-space-total">0</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                      <span>Espaços Ocupados (Vendidos)</span>
+                      <strong id="fin-space-occupied" style="color:#16a34a;">0</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;">
+                      <span>Espaços Livres (Disponíveis para Venda)</span>
+                      <strong id="fin-space-free" style="color:#dc2626;">0</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
