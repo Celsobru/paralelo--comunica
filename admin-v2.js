@@ -519,7 +519,10 @@ async function loadAds() {
       <td><strong>${item.title}</strong></td>
       <td>${item.client_name}</td>
       <td>${item.space_name}</td>
-      <td>${badgeForStatus(item.status)}</td>
+      <td>
+        ${badgeForStatus(item.status)}
+        ${item.is_bonus ? '<span class="badge" style="background:#8b5cf6;color:#fff;margin-left:4px;">🎁 Cortesia</span>' : '<span class="badge" style="background:#059669;color:#fff;margin-left:4px;">💵 Faturado</span>'}
+      </td>
       <td class="actions">
         <button data-id="${item.id}" class="btn btn-sm btn-edit edit-ad">Editar</button>
         <button data-id="${item.id}" class="btn btn-sm btn-delete delete-ad">Excluir</button>
@@ -538,6 +541,8 @@ async function loadAds() {
       document.getElementById('ad-start').value = a.start_date || '';
       document.getElementById('ad-end').value = a.end_date || '';
       document.getElementById('ad-status').value = a.status || 'active';
+      const bonusCb = document.getElementById('ad-is-bonus');
+      if (bonusCb) bonusCb.checked = !!a.is_bonus;
       if (a.video_url) {
         document.querySelector('input[name="admin-ad-type"][value="video"]').checked = true;
       } else if (a.embed_code) {
@@ -795,6 +800,7 @@ document.getElementById('ad-form').addEventListener('submit', async event => {
     start_date: document.getElementById('ad-start').value,
     end_date: document.getElementById('ad-end').value,
     status: document.getElementById('ad-status').value,
+    is_bonus: document.getElementById('ad-is-bonus')?.checked ? 1 : 0,
   };
 
   if (editingAdId) {
@@ -2156,3 +2162,166 @@ document.getElementById('analytics-month-select')?.addEventListener('change', e 
 document.getElementById('financial-month-select')?.addEventListener('change', e => {
   loadFinancialSection(e.target.value);
 });
+
+async function generateFinancialPDFReport() {
+  try {
+    const selectedMonth = document.getElementById('financial-month-select')?.value || new Date().toISOString().substring(0, 7);
+    const res = await fetch(`/api/admin/financial-stats?month=${selectedMonth}`);
+    if (!res.ok) throw new Error('Erro ao buscar dados do relatório.');
+    const data = await res.json();
+
+    const siteConfigRes = await fetch('/api/site-config').catch(() => null);
+    const siteConfig = siteConfigRes && siteConfigRes.ok ? await siteConfigRes.json() : {};
+    const siteName = siteConfig.site_name || 'Paralelo Comunica';
+
+    const [year, monthNum] = selectedMonth.split('-');
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthLabel = `${monthNames[parseInt(monthNum, 10) - 1]} / ${year}`;
+    const generatedAt = new Date().toLocaleString('pt-BR');
+
+    const formatBrl = cents => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const activeAdsHtml = (data.active_ads && data.active_ads.length) ? data.active_ads.map(ad => `
+      <tr>
+        <td style="padding:10px;border-bottom:1px solid #e2e8f0;font-weight:600;">${escapeHtml(ad.title)}</td>
+        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${escapeHtml(ad.client_name)}</td>
+        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${escapeHtml(ad.space_name)}</td>
+        <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;">${ad.is_bonus ? 'R$ 0,00' : formatBrl(ad.price_cents)}</td>
+        <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">
+          ${ad.is_bonus ? '<span style="background:#f3e8ff;color:#7e22ce;padding:4px 10px;border-radius:12px;font-weight:700;font-size:0.8rem;">🎁 Cortesia</span>' : '<span style="background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:12px;font-weight:700;font-size:0.8rem;">💵 Faturado</span>'}
+        </td>
+      </tr>
+    `).join('') : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#64748b;">Nenhum anúncio ativo no período.</td></tr>';
+
+    const printHtml = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <title>Relatório Financeiro - ${escapeHtml(siteName)} (${monthLabel})</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background: #fff; margin: 0; padding: 20px; font-size: 13px; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }
+          .header h1 { margin: 0; font-size: 22px; color: #0f172a; }
+          .header p { margin: 4px 0 0 0; color: #64748b; font-size: 12px; }
+          .badge-month { background: #2563eb; color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: bold; text-align: right; }
+          .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 25px; }
+          .card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; text-align: center; }
+          .card-val { font-size: 18px; font-weight: bold; margin-top: 4px; color: #0f172a; }
+          .card-lbl { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+          .section-title { font-size: 15px; font-weight: bold; margin: 25px 0 12px 0; color: #0f172a; border-left: 4px solid #2563eb; padding-left: 10px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          th { background: #f1f5f9; color: #334155; padding: 10px; text-align: left; font-weight: bold; font-size: 12px; border-bottom: 2px solid #cbd5e1; }
+          .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 11px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>📊 Relatório Financeiro & Comercial</h1>
+            <p>Portal: <strong>${escapeHtml(siteName)}</strong> &middot; Gerado em: ${generatedAt}</p>
+          </div>
+          <div class="badge-month">
+            ${monthLabel}
+          </div>
+        </div>
+
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-lbl">Faturamento do Mês</div>
+            <div class="card-val" style="color:#16a34a;">${formatBrl(data.current_month_revenue_cents || 0)}</div>
+          </div>
+          <div class="card">
+            <div class="card-lbl">Variação Mensal</div>
+            <div class="card-val" style="color:${(data.revenue_growth_percent || 0) >= 0 ? '#16a34a' : '#dc2626'};">
+              ${(data.revenue_growth_percent || 0) >= 0 ? '+' : ''}${data.revenue_growth_percent || 0}%
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl">Ocupação de Banners</div>
+            <div class="card-val" style="color:#2563eb;">${data.ad_spaces ? data.ad_spaces.occupancy_rate : 0}%</div>
+          </div>
+          <div class="card">
+            <div class="card-lbl">Projeção Anual (ARR)</div>
+            <div class="card-val" style="color:#7e22ce;">${formatBrl(data.annual_projected_revenue_cents || 0)}</div>
+          </div>
+        </div>
+
+        <div class="section-title">💰 Origem da Receita Faturada no Mês</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fonte de Receita</th>
+              <th style="text-align:right;">Valor Faturado (R$)</th>
+              <th style="text-align:center;">Participação (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;font-weight:600;">📢 Banners de Anúncios (Faturados)</td>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#16a34a;font-weight:bold;">${formatBrl(data.breakdown.ads_cents || 0)}</td>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">
+                ${data.current_month_revenue_cents > 0 ? Math.round((data.breakdown.ads_cents / data.current_month_revenue_cents) * 100) : 0}%
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;font-weight:600;">⭐ Assinaturas de Leitores VIP</td>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#2563eb;font-weight:bold;">${formatBrl(data.breakdown.subscriptions_cents || 0)}</td>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">
+                ${data.current_month_revenue_cents > 0 ? Math.round((data.breakdown.subscriptions_cents / data.current_month_revenue_cents) * 100) : 0}%
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;font-weight:600;">✍️ Publieditoriais & Notícias Pagas</td>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#7e22ce;font-weight:bold;">${formatBrl(data.breakdown.news_paid_cents || 0)}</td>
+              <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">-</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-title">📌 Banners Ativos no Período (Faturados vs Bonificados)</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Título do Anúncio</th>
+              <th>Cliente / Anunciante</th>
+              <th>Espaço / Posição</th>
+              <th style="text-align:right;">Valor</th>
+              <th style="text-align:center;">Tipo de Contrato</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${activeAdsHtml}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Documento gerado automaticamente pelo Sistema Administrativo de ${escapeHtml(siteName)} &middot; ${generatedAt}
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWin = window.open('', '_blank', 'width=900,height=700');
+    if (!printWin) {
+      alert('Por favor, permita pop-ups para gerar o PDF.');
+      return;
+    }
+    printWin.document.open();
+    printWin.document.write(printHtml);
+    printWin.document.close();
+
+  } catch (err) {
+    alert('Erro ao gerar relatório em PDF: ' + err.message);
+  }
+}
