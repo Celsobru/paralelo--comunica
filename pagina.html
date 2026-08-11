@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.9">
+  <link rel="stylesheet" href="styles.css?v=2.1">
   <style>
     .btn-header.btn-announce { background:#16a34a !important; color:#fff !important; border:2px solid #16a34a !important; }
     .btn-header.btn-announce:hover { background:#15803d !important; border-color:#15803d !important; }
@@ -41,6 +41,17 @@
     }
     .page-content .page-body p {
       margin-bottom: 20px;
+    }
+    .page-content .page-body a {
+      color: #2563eb !important;
+      font-weight: 600 !important;
+      text-decoration: underline !important;
+      text-underline-offset: 3px !important;
+      transition: color 0.2s ease !important;
+      cursor: pointer !important;
+    }
+    .page-content .page-body a:hover {
+      color: #1d4ed8 !important;
     }
     .page-loading {
       text-align: center;
@@ -187,29 +198,55 @@
       const slug = params.get('page');
       const main = document.getElementById('page-main');
 
-      if (!slug || !pageNames[slug]) {
+      if (!slug) {
         main.innerHTML = '<div class="page-not-found"><h2>Página não encontrada</h2><a href="/" class="back-link">← Voltar ao site</a></div>';
         return;
       }
 
-      document.title = pageNames[slug] + ' - Paralelo Comunica';
-
       try {
-        const res = await fetch('/api/pages/' + slug);
+        const res = await fetch('/api/pages/' + encodeURIComponent(slug));
         if (!res.ok) throw new Error('Não encontrado');
         const page = await res.json();
 
-        const paragraphs = (page.content || '').split('\n').filter(p => p.trim()).map(p => '<p>' + p + '</p>').join('');
+        document.title = (page.title || slug) + ' - Paralelo Comunica';
+
+        var rawContent = page.content || '';
+        var paragraphs = rawContent.split(/\r?\n/).filter(function(p) { return p.trim(); }).map(function(p) {
+          var trimmed = p.trim();
+
+          // 1. Auto-link emails (mailto:)
+          trimmed = trimmed.replace(/(^|[^"'>])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi, function(match, prefix, email) {
+            return prefix + '<a href="mailto:' + email + '" target="_blank" rel="noopener">' + email + '</a>';
+          });
+
+          // 2. Auto-link plain web/whatsapp URLs
+          trimmed = trimmed.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/gi, function(match, prefix, url) {
+            return prefix + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
+          });
+
+          // 3. Ensure any existing <a href="..."> tags open in new tab
+          trimmed = trimmed.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi, function(match, href, rest) {
+            if (!/target=/i.test(match)) {
+              return '<a href="' + href + '" target="_blank" rel="noopener"' + rest + '>';
+            }
+            return match;
+          });
+
+          if (/^<(h[1-6]|p|blockquote|ul|ol|li|div)/i.test(trimmed)) {
+            return trimmed;
+          }
+          return '<p>' + trimmed + '</p>';
+        }).join('');
 
         main.innerHTML =
-          '<a href="/" class="back-link">← Voltar</a>' +
-          '<h1 class="page-title">' + (page.title || pageNames[slug]) + '</h1>' +
+          '<a href="/" class="back-link">← Voltar ao site</a>' +
+          '<h1 class="page-title">' + page.title + '</h1>' +
           '<div class="page-body">' + (paragraphs || '<p>Conteúdo ainda não foi adicionado.</p>') + '</div>';
       } catch(e) {
         main.innerHTML =
-          '<a href="/" class="back-link">← Voltar</a>' +
-          '<h1 class="page-title">' + pageNames[slug] + '</h1>' +
-          '<div class="page-body"><p>Conteúdo ainda não foi adicionado.</p></div>';
+          '<a href="/" class="back-link">← Voltar ao site</a>' +
+          '<h1 class="page-title">Página Não Encontrada</h1>' +
+          '<div class="page-body"><p>A página requisitada não foi encontrada ou ainda não tem conteúdo publicado.</p></div>';
       }
     }
 

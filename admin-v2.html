@@ -919,31 +919,46 @@
             </div>
           </div>
         </section>
-        <!-- PÁGINAS INSTITUCIONAIS -->
+        <!-- PÁGINAS INSTITUCIONAIS E PERSONALIZADAS -->
         <section id="section-pages" class="admin-section hidden">
           <div class="admin-panel">
             <div class="admin-panel-header">
-              <h2>Páginas Institucionais</h2>
-              <span class="panel-subtitle">Edite o conteúdo das páginas Sobre, Contato, Anuncie e Privacidade</span>
+              <h2>Páginas do Site</h2>
+              <span class="panel-subtitle">Edite ou crie novas páginas (ex: Assessoria de Imprensa, Sobre, Contato, etc.)</span>
             </div>
             <div class="admin-panel-body">
-              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-                <button class="btn btn-page-tab active" data-page="sobre">Sobre Nós</button>
-                <button class="btn btn-page-tab" data-page="contato">Contato</button>
-                <button class="btn btn-page-tab" data-page="anuncie">Anuncie</button>
-                <button class="btn btn-page-tab" data-page="privacidade">Privacidade</button>
+              <div id="pages-tab-container" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                <!-- Abas dinâmicas carregadas por JS -->
               </div>
               <form id="page-form" class="admin-form" style="grid-template-columns: 1fr;">
                 <input type="hidden" id="page-slug" value="sobre">
+                <input type="hidden" id="page-is-custom" value="0">
                 <label>Título da Página
-                  <input type="text" id="page-title-input" placeholder="Ex: Sobre o Paralelo Comunica">
+                  <input type="text" id="page-title-input" placeholder="Ex: Assessoria de Imprensa" required>
                 </label>
-                <label>Conteúdo (use quebras de linha para parágrafos)
-                  <textarea id="page-content-input" rows="15" placeholder="Escreva o conteúdo da página aqui..." style="font-family:monospace;font-size:0.9rem;"></textarea>
+                <label id="page-slug-label" style="display:none;">Identificador Único (Slug da URL)
+                  <input type="text" id="page-slug-custom-input" placeholder="ex: assessoria-de-imprensa">
+                  <small style="color:var(--muted);display:block;margin-top:4px;">O link para colocar no menu será: <code id="page-url-preview">/pagina.html?page=assessoria-de-imprensa</code></small>
                 </label>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary">Salvar</button>
-                  <a href="#" id="page-preview-link" target="_blank" class="btn btn-outline" style="margin-left:8px;text-decoration:none;">Visualizar</a>
+                <label>Conteúdo da Página
+                  <div class="editor-toolbar" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; background:#f3f4f6; padding:6px 10px; border-radius:6px; border:1px solid #e5e7eb;">
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'b')" title="Negrito"><b>N</b> Negrito</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'i')" title="Itálico"><i>I</i> Itálico</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'u')" title="Sublinhado"><u>S</u> Sublinhado</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'link')" title="Inserir Link / E-mail / WhatsApp"><b>🔗</b> Link / E-mail / WhatsApp</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'h2')" title="Subtítulo Grande"><b>H2</b> Subtítulo</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'h3')" title="Subtítulo Médio"><b>H3</b> Subtítulo Pequeno</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'uppercase')" title="Transformar em CAIXA ALTA"><b>AA</b> CAIXA ALTA</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'lowercase')" title="Transformar em caixa baixa"><b>aa</b> minúsculo</button>
+                    <button type="button" class="btn-tb" onclick="formatText('page-content-input', 'quote')" title="Citação / Destaque"><b>"</b> Citação</button>
+                  </div>
+                  <textarea id="page-content-input" rows="14" placeholder="Escreva o conteúdo da página aqui. Coloque links, e-mails ou links de WhatsApp..."></textarea>
+                </label>
+                <div class="form-actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <button type="submit" class="btn btn-primary">Salvar Página</button>
+                  <a href="#" id="page-preview-link" target="_blank" class="btn btn-outline" style="text-decoration:none;">Visualizar Página</a>
+                  <button type="button" id="btn-copy-page-link" class="btn btn-secondary">Copiar Link do Menu</button>
+                  <button type="button" id="btn-delete-page" class="btn btn-delete" style="display:none;margin-left:auto;">Excluir Página</button>
                 </div>
               </form>
             </div>
