@@ -94,6 +94,14 @@
 
   <header class="site-header">
     <div class="header-main">
+      <div class="header-left-controls">
+        <button id="btn-toggle-menu" class="header-control-btn" title="Abrir Menu" aria-label="Abrir Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <button id="btn-open-search" class="header-control-btn" title="Buscar no site" aria-label="Buscar no site">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+      </div>
       <a href="/" class="brand">
         <img src="/uploads/logo.png?v=2" alt="Paralelo Comunica" class="brand-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
         <span class="brand-name" style="display:none;">PARALELO COMUNICA</span>
@@ -438,6 +446,58 @@
       <div id="live-player-container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000;"></div>
     </div>
   </div>
+  <!-- Slide-Out Side Drawer Navigation Menu -->
+  <div id="side-drawer-backdrop" class="side-drawer-backdrop"></div>
+  <aside id="side-drawer" class="side-drawer">
+    <div class="side-drawer-header">
+      <div class="side-drawer-brand">
+        <img src="/uploads/logo.png?v=2" alt="Logo" class="side-drawer-logo" onerror="this.style.display='none';">
+        <span>MENU</span>
+      </div>
+      <button id="btn-close-drawer" class="btn-close-drawer" aria-label="Fechar Menu">&times;</button>
+    </div>
+
+    <div class="side-drawer-search">
+      <form id="drawer-search-form" class="drawer-search-form">
+        <input type="text" id="drawer-search-input" placeholder="Digite o termo da busca..." autocomplete="off">
+        <button type="submit" aria-label="Pesquisar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="side-drawer-body">
+      <div class="drawer-section">
+        <div class="drawer-section-title">Navegação</div>
+        <ul class="drawer-nav-list">
+          <li><a href="/"><span class="drawer-icon">🏠</span> <span>Início</span> <span class="drawer-arrow">&rsaquo;</span></a></li>
+          <li><a href="/"><span class="drawer-icon">⚡</span> <span>Últimas Notícias / Ao Vivo</span> <span class="drawer-arrow">&rsaquo;</span></a></li>
+        </ul>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Categorias</div>
+        <ul class="drawer-nav-list" id="drawer-categories-list">
+          <!-- Carregado via JS -->
+        </ul>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Institucional</div>
+        <ul class="drawer-nav-list" id="drawer-pages-list">
+          <!-- Carregado via JS -->
+        </ul>
+      </div>
+
+      <div class="drawer-footer-actions">
+        <a href="#" target="_blank" rel="noopener" class="drawer-btn btn-announce-drawer" id="btn-announce-drawer">📢 Anuncie Conosco</a>
+        <a href="subscribe.html" class="drawer-btn btn-subscribe-drawer">⭐ Assine o Portal</a>
+        <a href="login.html" class="drawer-btn btn-login-drawer">👤 Área do Assinante / Entrar</a>
+      </div>
+    </div>
+  </aside>
+
   <script src="live-modal.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
