@@ -1744,7 +1744,9 @@ html, body {
 }
 
 .lang-dropdown li a {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 8px 16px;
   color: #cbd5e1;
   text-decoration: none;
@@ -1752,6 +1754,13 @@ html, body {
   font-weight: 500;
   transition: background 0.2s, color 0.2s;
   text-align: left;
+}
+
+.lang-dropdown li a img {
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  display: block;
 }
 
 .lang-dropdown li a:hover {
