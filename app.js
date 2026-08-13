@@ -92,19 +92,20 @@ function loadNews() {
   return stored ? JSON.parse(stored) : defaultNews;
 }
 
-async function loadNewsFromServer(category, subcategory) {
+async function loadNewsFromServer(category, subcategory, search) {
   try {
     let url = '/api/news';
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     if (subcategory) params.append('subcategory', subcategory);
+    if (search) params.append('search', search);
     if (params.toString()) url += '?' + params.toString();
 
     const response = await fetch(url);
     if (response.ok) {
       const serverNews = await response.json();
       if (serverNews.length > 0) {
-        if (!category && !subcategory) localStorage.setItem(storageKey, JSON.stringify(serverNews));
+        if (!category && !subcategory && !search) localStorage.setItem(storageKey, JSON.stringify(serverNews));
         return serverNews;
       }
     }
@@ -419,8 +420,9 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const category = params.get('category');
   const subcategory = params.get('subcategory');
+  const search = params.get('search');
 
-  const newsItems = await loadNewsFromServer(category, subcategory);
+  const newsItems = await loadNewsFromServer(category, subcategory, search);
 
   const pageTitle = document.getElementById('page-title');
   const featuredSection = document.getElementById('featured-news');
@@ -429,6 +431,12 @@ async function init() {
 
   if (category) {
     const titleText = subcategory ? `${category} › ${subcategory}` : category;
+    if (pageTitle) pageTitle.textContent = `${titleText} - Paralelo Comunica`;
+    if (document.title) document.title = `${titleText} - Paralelo Comunica`;
+    if (sectionTitle) sectionTitle.innerHTML = titleText;
+    if (featuredSection) featuredSection.style.display = 'none';
+  } else if (search) {
+    const titleText = `Busca: "${search}"`;
     if (pageTitle) pageTitle.textContent = `${titleText} - Paralelo Comunica`;
     if (document.title) document.title = `${titleText} - Paralelo Comunica`;
     if (sectionTitle) sectionTitle.innerHTML = titleText;
@@ -512,4 +520,123 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Reg error:', err));
   });
+}
+
+function initSideDrawer() {
+  const backdrop = document.getElementById('side-drawer-backdrop');
+  const drawer = document.getElementById('side-drawer');
+  const btnToggle = document.getElementById('btn-toggle-menu');
+  const btnSearch = document.getElementById('btn-open-search');
+  const btnClose = document.getElementById('btn-close-drawer');
+  const searchInput = document.getElementById('drawer-search-input');
+  const searchForm = document.getElementById('drawer-search-form');
+
+  function openDrawer(focusSearch = false) {
+    if (backdrop) backdrop.classList.add('open');
+    if (drawer) drawer.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (focusSearch && searchInput) {
+      setTimeout(() => searchInput.focus(), 250);
+    }
+  }
+
+  function closeDrawer() {
+    if (backdrop) backdrop.classList.remove('open');
+    if (drawer) drawer.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (btnToggle) btnToggle.addEventListener('click', () => openDrawer(false));
+  if (btnSearch) btnSearch.addEventListener('click', () => openDrawer(true));
+  if (btnClose) btnClose.addEventListener('click', closeDrawer);
+  if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+  if (searchForm) {
+    searchForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const query = searchInput ? searchInput.value.trim() : '';
+      if (!query) return;
+      closeDrawer();
+      window.location.href = `/?search=${encodeURIComponent(query)}`;
+    });
+  }
+
+  // Load Categories for Side Drawer
+  async function loadDrawerCategories() {
+    try {
+      const catListEl = document.getElementById('drawer-categories-list');
+      if (!catListEl) return;
+      const res = await fetch('/api/categories');
+      if (!res.ok) return;
+      const cats = await res.json();
+      if (!Array.isArray(cats) || cats.length === 0) return;
+
+      const currentCategory = new URLSearchParams(window.location.search).get('category');
+      catListEl.innerHTML = cats.map(c => {
+        const isActive = currentCategory === c.name ? 'active' : '';
+        const safeName = (c.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return `
+          <li>
+            <a href="/?category=${encodeURIComponent(c.name)}" class="${isActive}">
+              <span class="drawer-icon">📂</span>
+              <span>${safeName}</span>
+              <span class="drawer-arrow">&rsaquo;</span>
+            </a>
+          </li>
+        `;
+      }).join('');
+    } catch (e) {}
+  }
+
+  // Load Institutional Pages for Side Drawer
+  async function loadDrawerPages() {
+    try {
+      const pageListEl = document.getElementById('drawer-pages-list');
+      if (!pageListEl) return;
+      const res = await fetch('/api/pages');
+      if (!res.ok) return;
+      const pages = await res.json();
+      if (!Array.isArray(pages) || pages.length === 0) return;
+
+      const currentSlug = new URLSearchParams(window.location.search).get('slug');
+      pageListEl.innerHTML = pages.map(p => {
+        const isActive = currentSlug === p.slug ? 'active' : '';
+        const safeTitle = (p.title || p.slug || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return `
+          <li>
+            <a href="/pagina.html?slug=${encodeURIComponent(p.slug)}" class="${isActive}">
+              <span class="drawer-icon">📄</span>
+              <span>${safeTitle}</span>
+              <span class="drawer-arrow">&rsaquo;</span>
+            </a>
+          </li>
+        `;
+      }).join('');
+    } catch (e) {}
+  }
+
+  // Bind site configuration to Anuncie Conosco button
+  async function loadDrawerAnnounceLink() {
+    try {
+      const announceBtn = document.getElementById('btn-announce-drawer');
+      if (!announceBtn) return;
+      const res = await fetch('/api/site-config');
+      if (!res.ok) return;
+      const cfg = await res.json();
+      if (cfg && cfg.whatsapp_phone) {
+        const cleanPhone = cfg.whatsapp_phone.replace(/\D/g, '');
+        announceBtn.href = `https://wa.me/${cleanPhone}?text=Olá!%20Gostaria%20de%20anunciar%20no%20portal.`;
+      }
+    } catch (e) {}
+  }
+
+  loadDrawerCategories();
+  loadDrawerPages();
+  loadDrawerAnnounceLink();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSideDrawer);
+} else {
+  initSideDrawer();
 }
