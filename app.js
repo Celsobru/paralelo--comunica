@@ -636,7 +636,52 @@ function initSideDrawer() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSideDrawer);
+  document.addEventListener('DOMContentLoaded', () => {
+    initSideDrawer();
+    initLanguageSelector();
+  });
 } else {
   initSideDrawer();
+  initLanguageSelector();
+}
+
+// Google Translate Integration Callback
+window.googleTranslateElementInit = function() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'pt',
+    includedLanguages: 'pt,en,es,fr,it',
+    autoDisplay: false
+  }, 'google_translate_element');
+};
+
+// Custom Language Dropdown Logic
+function initLanguageSelector() {
+  const btn = document.getElementById('btn-lang-selector');
+  const dropdown = document.getElementById('lang-dropdown');
+  if (!btn || !dropdown) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+  });
+
+  const options = dropdown.querySelectorAll('.lang-opt');
+  options.forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.preventDefault();
+      const lang = opt.getAttribute('data-lang');
+      
+      // Trigger Google Translate native combo selection
+      const select = document.querySelector('.goog-te-combo');
+      if (select) {
+        select.value = lang;
+        select.dispatchEvent(new Event('change'));
+      }
+      dropdown.classList.remove('open');
+    });
+  });
 }
