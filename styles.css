@@ -1744,28 +1744,40 @@ html, body {
 }
 
 .lang-dropdown li a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  color: #cbd5e1;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.2s, color 0.2s;
-  text-align: left;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 10px 16px !important;
+  color: #cbd5e1 !important;
+  text-decoration: none !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  transition: background 0.2s, color 0.2s !important;
+  text-align: left !important;
+  box-shadow: none !important;
+  transform: none !important;
+  gap: 10px !important;
 }
 
 .lang-dropdown li a img {
-  border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-  display: block;
+  border-radius: 2px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  width: 20px !important;
+  height: 14px !important;
 }
 
 .lang-dropdown li a:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Hide Google Translate original layout elements */
