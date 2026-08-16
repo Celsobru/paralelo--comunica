@@ -823,8 +823,8 @@ app.put('/api/admin/site-stats', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== ADMIN ANALYTICS =====
-app.get('/api/admin/analytics', requireAdmin, async (req, res) => {
+// ===== ADMIN DASHBOARD COUNTS =====
+app.get('/api/admin/dashboard-counts', requireAdmin, async (req, res) => {
   const [newsCount, clientCount, adSpaceCount, activeAds, subscribers, occupiedSpaces] = await Promise.all([
     getAsync('SELECT COUNT(*) AS value FROM news'),
     getAsync('SELECT COUNT(*) AS value FROM clients'),
@@ -1080,6 +1080,52 @@ app.get('/api/admin/analytics', requireAdmin, async (req, res) => {
     let availableMonths = monthRows.map(r => r.year_month).filter(Boolean);
     if (!availableMonths.includes(requestedMonth)) availableMonths.unshift(requestedMonth);
 
+    // DAILY STATS FOR THE SELECTED MONTH
+    const dailyRows = await allAsync(
+      "SELECT strftime('%d', created_at) as day, COUNT(*) as cnt FROM pageviews WHERE year_month = ? GROUP BY day",
+      [requestedMonth]
+    );
+    const daysInMonth = new Date(reqYear, reqMonth, 0).getDate();
+    const dailyMap = {};
+    dailyRows.forEach(r => {
+      if (r.day) {
+        const d = parseInt(r.day, 10);
+        dailyMap[d] = r.cnt;
+      }
+    });
+    const dailyStats = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      dailyStats.push({
+        day: String(d).padStart(2, '0'),
+        views: dailyMap[d] || 0
+      });
+    }
+
+    // MONTHLY STATS FOR LAST 6 MONTHS
+    const monthlyRows = await allAsync(
+      "SELECT year_month, COUNT(*) as cnt FROM pageviews GROUP BY year_month ORDER BY year_month DESC LIMIT 6"
+    );
+    const monthlyStats = [];
+    const dateCursor = new Date(reqYear, reqMonth - 1, 1);
+    for (let i = 0; i < 6; i++) {
+      const ym = dateCursor.toISOString().substring(0, 7);
+      monthlyStats.push({
+        year_month: ym,
+        views: 0
+      });
+      dateCursor.setMonth(dateCursor.getMonth() - 1);
+    }
+    monthlyStats.reverse();
+    const monthlyMap = {};
+    monthlyRows.forEach(r => {
+      if (r.year_month) {
+        monthlyMap[r.year_month] = r.cnt;
+      }
+    });
+    monthlyStats.forEach(item => {
+      item.views = monthlyMap[item.year_month] || 0;
+    });
+
     res.json({
       total_views: totalViews,
       today_views: todayViews,
@@ -1089,7 +1135,9 @@ app.get('/api/admin/analytics', requireAdmin, async (req, res) => {
       prev_month_views: prevMonthViews,
       trend_percent: trendPercent,
       top_news: topNews,
-      available_months: availableMonths
+      available_months: availableMonths,
+      daily_stats: dailyStats,
+      monthly_stats: monthlyStats
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

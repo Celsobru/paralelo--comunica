@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="/uploads/logo.png">
   <link rel="stylesheet" href="admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="admin-mobile-header">
@@ -1107,8 +1108,21 @@
                   <h3 style="margin:0 0 4px 0;font-size:1.05rem;color:var(--text);">Termômetro de Desempenho do Site</h3>
                   <span style="font-size:0.88rem;color:var(--muted);" id="analytics-thermometer-text">Comparação com o mês anterior...</span>
                 </div>
-                <div id="analytics-thermometer-badge">
-                  <!-- Badge JS -->
+              </div>
+
+              <!-- Gráficos de Audiência (Acessos Diários e Comparativo Mensal) -->
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap:24px; margin-bottom:24px;">
+                <div style="background:var(--bg-secondary,#fff); border:1px solid var(--border,#e2e8f0); border-radius:10px; padding:20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                  <h3 style="margin-top:0; margin-bottom:16px; font-size:1rem; color:var(--text);">📈 Visualizações Diárias (Este Mês)</h3>
+                  <div style="position:relative; height:280px; width:100%;">
+                    <canvas id="dailyChart"></canvas>
+                  </div>
+                </div>
+                <div style="background:var(--bg-secondary,#fff); border:1px solid var(--border,#e2e8f0); border-radius:10px; padding:20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                  <h3 style="margin-top:0; margin-bottom:16px; font-size:1rem; color:var(--text);">📊 Comparativo Mensal (Últimos 6 Meses)</h3>
+                  <div style="position:relative; height:280px; width:100%;">
+                    <canvas id="monthlyChart"></canvas>
+                  </div>
                 </div>
               </div>
 

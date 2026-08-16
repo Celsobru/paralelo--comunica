@@ -300,7 +300,7 @@ function renderDashboardSpacesTable(spaces) {
 
 async function loadDashboard() {
   const [analytics, spaces] = await Promise.all([
-    fetchJson('/api/admin/analytics'),
+    fetchJson('/api/admin/dashboard-counts'),
     fetchJson('/api/admin/ad-spaces'),
   ]);
 
@@ -2031,6 +2031,90 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+let dailyChartInstance = null;
+let monthlyChartInstance = null;
+
+function renderAnalyticsCharts(dailyData, monthlyData) {
+  const dailyLabels = dailyData.map(d => parseInt(d.day, 10));
+  const dailyValues = dailyData.map(d => d.views);
+
+  const monthNamesShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const monthlyLabels = monthlyData.map(m => {
+    const [year, mo] = m.year_month.split('-');
+    return `${monthNamesShort[parseInt(mo, 10) - 1]} / ${year}`;
+  });
+  const monthlyValues = monthlyData.map(m => m.views);
+
+  // Daily views chart (Line)
+  const ctxDaily = document.getElementById('dailyChart');
+  if (ctxDaily) {
+    if (dailyChartInstance) dailyChartInstance.destroy();
+    dailyChartInstance = new Chart(ctxDaily.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: dailyLabels,
+        datasets: [{
+          label: 'Acessos por Dia',
+          data: dailyValues,
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.08)',
+          borderWidth: 2.5,
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: '#2563eb',
+          pointRadius: 3,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  }
+
+  // Monthly comparison chart (Bar)
+  const ctxMonthly = document.getElementById('monthlyChart');
+  if (ctxMonthly) {
+    if (monthlyChartInstance) monthlyChartInstance.destroy();
+    monthlyChartInstance = new Chart(ctxMonthly.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: monthlyLabels,
+        datasets: [{
+          label: 'Acessos por Mês',
+          data: monthlyValues,
+          backgroundColor: '#16a34a',
+          borderRadius: 4,
+          maxBarThickness: 40
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  }
+}
+
 async function loadAnalyticsSection(month) {
   try {
     const selectedMonth = month || document.getElementById('analytics-month-select').value || new Date().toISOString().substring(0, 7);
@@ -2069,13 +2153,18 @@ async function loadAnalyticsSection(month) {
     const thermoBadge = document.getElementById('analytics-thermometer-badge');
     if (trendVal > 15) {
       thermoText.textContent = `Audiência em forte expansão! Cresceu +${trendVal}% em relação ao mês anterior.`;
-      thermoBadge.innerHTML = `<span style="background:#16a34a;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🚀 CRESCIMENTO ACELERADO (+${trendVal}%)</span>`;
+      if (thermoBadge) thermoBadge.innerHTML = `<span style="background:#16a34a;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🚀 CRESCIMENTO ACELERADO (+${trendVal}%)</span>`;
     } else if (trendVal >= 0) {
       thermoText.textContent = `Audiência estável e saudável com alta de +${trendVal}%.`;
-      thermoBadge.innerHTML = `<span style="background:#2563eb;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🟢 TENDÊNCIA POSITIVA (+${trendVal}%)</span>`;
+      if (thermoBadge) thermoBadge.innerHTML = `<span style="background:#2563eb;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🟢 TENDÊNCIA POSITIVA (+${trendVal}%)</span>`;
     } else {
       thermoText.textContent = `Queda de ${trendVal}% na audiência em relação ao mês anterior.`;
-      thermoBadge.innerHTML = `<span style="background:#dc2626;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🔴 QUEDA DE AUDIÊNCIA (${trendVal}%)</span>`;
+      if (thermoBadge) thermoBadge.innerHTML = `<span style="background:#dc2626;color:#fff;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;">🔴 QUEDA DE AUDIÊNCIA (${trendVal}%)</span>`;
+    }
+
+    // Render Charts
+    if (data.daily_stats && data.monthly_stats) {
+      renderAnalyticsCharts(data.daily_stats, data.monthly_stats);
     }
 
     const topNewsTbody = document.getElementById('top-news-table');
