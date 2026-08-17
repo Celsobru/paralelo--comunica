@@ -91,7 +91,8 @@ class WhatsAppBot {
       console.log('Iniciando WhatsApp Client...');
       await this.client.initialize();
     } catch (err) {
-      console.error('WhatsApp init error:', err.message);
+      console.error('WhatsApp init error:', err);
+      this.lastError = err?.stack || err?.message || String(err);
       this.status = 'error';
     }
   }
@@ -146,6 +147,7 @@ class WhatsAppBot {
       qrCode: this.qrCodeBase64,
       phoneNumber: this.phoneNumber,
       ready: this.ready,
+      errorDetails: this.lastError || null,
     };
   }
 
