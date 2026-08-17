@@ -1079,7 +1079,14 @@ async function pollWhatsAppStatus() {
 
     qrContainer.style.display = 'none';
     connectedInfo.style.display = 'none';
-    disconnectBtn.style.display = 'none';
+    
+    // Always show the button except when stopped, to allow forcing a reset
+    if (status.status !== 'stopped') {
+      disconnectBtn.style.display = 'inline-block';
+      disconnectBtn.textContent = status.status === 'connected' ? 'Desconectar WhatsApp' : 'Resetar & Limpar WhatsApp';
+    } else {
+      disconnectBtn.style.display = 'none';
+    }
 
     switch (status.status) {
       case 'initializing':
@@ -1096,16 +1103,18 @@ async function pollWhatsAppStatus() {
         statusText.textContent = '';
         connectedInfo.style.display = 'block';
         phoneDisplay.textContent = status.phoneNumber ? `+${status.phoneNumber}` : '';
-        disconnectBtn.style.display = 'inline-block';
         break;
       case 'disconnected':
         statusText.textContent = 'Desconectado. Reconectando...';
         statusText.style.color = 'var(--danger)';
         break;
       case 'auth_failure':
-        statusText.textContent = 'Falha na autenticacao. Clique em "Desconectar" para tentar novamente.';
+        statusText.textContent = 'Falha na autenticação. Clique em "Resetar" para tentar novamente.';
         statusText.style.color = 'var(--danger)';
-        disconnectBtn.style.display = 'inline-block';
+        break;
+      case 'error':
+        statusText.textContent = 'Ocorreu um erro no bot. Clique em "Resetar & Limpar WhatsApp".';
+        statusText.style.color = 'var(--danger)';
         break;
       default:
         statusText.textContent = 'Status: ' + status.status;
@@ -1115,7 +1124,19 @@ async function pollWhatsAppStatus() {
 }
 
 document.getElementById('btn-whatsapp-disconnect').addEventListener('click', async () => {
-  await fetchJson('/api/admin/whatsapp/disconnect', { method: 'POST' });
+  if (confirm('Deseja realmente desconectar/resetar o WhatsApp Bot? Isso irá encerrar o processo atual e limpar todos os arquivos de sessão corrompidos.')) {
+    const disconnectBtn = document.getElementById('btn-whatsapp-disconnect');
+    disconnectBtn.disabled = true;
+    disconnectBtn.textContent = 'Processando...';
+    try {
+      await fetchJson('/api/admin/whatsapp/disconnect', { method: 'POST' });
+      alert('Comando de reset enviado com sucesso! Aguarde cerca de 10 segundos para que a conexão seja reiniciada e o QR code reapareça.');
+    } catch (e) {
+      alert('Erro ao resetar: ' + e.message);
+    } finally {
+      disconnectBtn.disabled = false;
+    }
+  }
 });
 
 document.getElementById('rss-source-form').addEventListener('submit', async event => {
