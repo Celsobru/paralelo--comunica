@@ -13,8 +13,38 @@ class WhatsAppBot {
     this.reconnectTimer = null;
   }
 
+  cleanLockFiles() {
+    const fs = require('fs');
+    const { execSync } = require('child_process');
+    try {
+      execSync('pkill -9 -f chrome || pkill -9 -f chromium || true', { stdio: 'ignore' });
+    } catch (e) {}
+    try {
+      const removeLocks = (dirPath) => {
+        if (!fs.existsSync(dirPath)) return;
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          if (entry.isDirectory()) {
+            removeLocks(fullPath);
+          } else if (entry.name.includes('SingletonLock') || entry.name === 'lockfile' || entry.name.includes('DevToolsActivePort')) {
+            try {
+              fs.unlinkSync(fullPath);
+              console.log('Removed stale lock file:', fullPath);
+            } catch (err) {}
+          }
+        }
+      };
+      removeLocks(this.sessionDir);
+    } catch (err) {
+      console.warn('Lock cleanup warning:', err.message);
+    }
+  }
+
   async start() {
     if (this.client) return;
+
+    this.cleanLockFiles();
 
     this.qrCodeBase64 = null;
     this.status = 'initializing';
