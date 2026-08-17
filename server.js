@@ -1870,6 +1870,10 @@ async function checkExpiringSubscriptions() {
 // ===== START =====
 const PORT = process.env.PORT || 3002;
 
+app.listen(PORT, () => {
+  console.log(`Servidor iniciado em http://localhost:${PORT}`);
+});
+
 ensureAdminUser().then(async () => {
   await rssMonitor.start();
   await activateScheduledAds();
@@ -1881,10 +1885,6 @@ ensureAdminUser().then(async () => {
   setInterval(checkExpiringSubscriptions, 12 * 60 * 60 * 1000); // Executar a cada 12 horas
 
   whatsappBot.start().catch(err => console.error('WhatsApp bot start error:', err.message));
-  app.listen(PORT, () => {
-    console.log(`Servidor iniciado em http://localhost:${PORT}`);
-  });
 }).catch(err => {
-  console.error('Erro ao iniciar servidor:', err);
-  process.exit(1);
+  console.error('Erro na inicializacao dos servicos de fundo:', err);
 });
