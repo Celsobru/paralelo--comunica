@@ -63,6 +63,10 @@ class WhatsAppBot {
       this.status = 'auth_failure';
       this.ready = false;
       console.error('WhatsApp auth failure:', msg);
+      // Clean session folder and restart to generate new QR Code
+      this.stop(true).then(() => {
+        this.start().catch(e => console.error('Restart after auth_failure error:', e.message));
+      });
     });
 
     this.client.on('disconnected', (reason) => {
@@ -84,19 +88,41 @@ class WhatsAppBot {
     }
   }
 
-  async stop() {
+  async stop(cleanSession = false) {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
     if (this.client) {
       try {
-        await this.client.destroy();
-      } catch (e) {}
+        if (this.ready) {
+          await Promise.race([
+            this.client.logout(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 4000))
+          ]).catch(e => console.warn('Logout warning:', e.message));
+        }
+        await Promise.race([
+          this.client.destroy(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Destroy timeout')), 4000))
+        ]).catch(e => console.warn('Destroy warning:', e.message));
+      } catch (e) {
+        console.error('Stop error:', e.message);
+      }
       this.client = null;
       this.ready = false;
       this.status = 'stopped';
       this.qrCodeBase64 = null;
+    }
+    if (cleanSession) {
+      const fs = require('fs');
+      try {
+        if (fs.existsSync(this.sessionDir)) {
+          fs.rmSync(this.sessionDir, { recursive: true, force: true });
+          console.log('Session folder deleted successfully');
+        }
+      } catch (err) {
+        console.error('Error deleting session folder:', err.message);
+      }
     }
   }
 
