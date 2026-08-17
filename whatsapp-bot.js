@@ -17,7 +17,7 @@ class WhatsAppBot {
     const fs = require('fs');
     const { execSync } = require('child_process');
     try {
-      execSync('pkill -9 -f "paralelo--comunica" || true', { stdio: 'ignore' });
+      execSync('pkill -9 -f "chrome.*paralelo--comunica" || pkill -9 -f "chromium.*paralelo--comunica" || true', { stdio: 'ignore' });
     } catch (e) {}
     try {
       const removeLocks = (dirPath) => {
