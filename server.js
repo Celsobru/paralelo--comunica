@@ -1390,7 +1390,7 @@ app.get('/api/admin/whatsapp/status', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/whatsapp/disconnect', requireAdmin, async (req, res) => {
-  await whatsappBot.stop();
+  await whatsappBot.stop(true);
   await new Promise(r => setTimeout(r, 1000));
   whatsappBot.start().catch(() => {});
   res.json({ ok: true });
