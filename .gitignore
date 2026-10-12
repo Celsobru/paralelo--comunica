@@ -6,3 +6,10 @@ database.sqlite
 *.log
 .DS_Store
 data/
+
+# Notas/arquivos com credenciais em texto puro (NUNCA versionar)
+*EMAILS*.txt
+Conta admin*.txt
+SENHAS*.txt
+acesso*.txt
+password*.txt
