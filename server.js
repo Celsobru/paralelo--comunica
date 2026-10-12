@@ -35,7 +35,11 @@ const storage = multer.diskStorage({
 });
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'video/mp4'];
-  if (allowedTypes.includes(file.mimetype)) {
+  // Seguranca: o mimetype vem do cliente e pode ser falsificado.
+  // Validamos tambem a extensao real para bloquear uploads de scripts (.js, .php, .html, .svg).
+  const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.pdf', '.mp4'];
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  if (allowedTypes.includes(file.mimetype) && allowedExts.includes(ext)) {
     cb(null, true);
   } else {
     cb(new Error('Tipo de arquivo não permitido'), false);
@@ -59,11 +63,59 @@ const resetLimiter = rateLimit({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: true, credentials: true }));
+
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ======= Seguranca: nao servir arquivos internos/sensiveis pelo static =======
+// Bloqueia download de base de dados, codigo-fonte, .env, backups, credenciais, etc.
+app.use((req, res, next) => {
+  let p;
+  try { p = decodeURIComponent(req.path); } catch (e) { p = req.path; }
+  p = (p || '').toLowerCase();
+  if (p === '/robots.txt' || p === '/ads.txt' || p.startsWith('/.well-known/')) return next();
+  const blocked =
+    p.startsWith('/data/') ||
+    p.startsWith('/node_modules') ||
+    p.startsWith('/.git') ||
+    p.startsWith('/backups') ||
+    p.includes('/.') ||
+    /\.(txt|sqlite|sqlite3|db|sql|log|env|bak|old|orig|zip|tar|gz|rar|pem|key|crt|p12|bat|cmd|sh|ps1|yml|yaml|ini|conf)$/.test(p) ||
+    /^\/(server|db|check_db|rss-monitor|whatsapp-bot)[^/]*\.js$/.test(p) ||
+    /^\/(fix|test|check|debug|scan|dbscan|audit|crack|cleanup|restore|backup)[^/]*\.js$/.test(p) ||
+    (p.startsWith('/uploads/') && /\.(php|phtml|html?|svg|js|sh|exe|bat|cmd)$/.test(p));
+  if (blocked) return res.status(404).send('Not found');
+  next();
+});
+
+// ======= Protecao anti-XSS (stored XSS) =======
+// Remove tags/HTML de campos de texto simples vindos do cliente (nome, titulo, email, etc.)
+const PLAIN_TEXT_FIELDS = ['name', 'nome', 'company', 'company_name', 'empresa', 'email', 'phone', 'telefone', 'celular', 'whatsapp', 'document', 'documento', 'cpf', 'cnpj', 'title', 'titulo', 'city', 'cidade', 'category', 'categoria', 'subcategory', 'subcategoria', 'source', 'fonte', 'keyword', 'palavra_chave', 'author', 'autor', 'address', 'endereco', 'website', 'link', 'feed_url', 'url'];
+function sanitizeTextFields(obj) {
+  if (!obj || typeof obj !== 'object') return;
+  for (const key of Object.keys(obj)) {
+    if (typeof obj[key] === 'string' && PLAIN_TEXT_FIELDS.includes(key.toLowerCase())) {
+      obj[key] = obj[key].replace(/<[^>]*>/g, '').replace(/[<>]/g, '').trim();
+    }
+  }
+}
+app.use((req, res, next) => {
+  sanitizeTextFields(req.body);
+  sanitizeTextFields(req.query);
+  next();
+});
+// =============================================
 app.use(session({
-  secret: '***REMOVED***',
+  secret: process.env.SESSION_SECRET || '***REMOVED***',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 },
+  cookie: { maxAge: 24 * 60 * 60 * 1000, sameSite: 'lax' },
 }));
 
 app.use('/uploads', express.static(uploadDir));
@@ -82,7 +134,7 @@ app.get('/noticia.html', async (req, res, next) => {
       if (!item) return res.send(html);
 
       const siteConfig = await getAsync('SELECT site_name FROM site_config WHERE id = 1');
-      const siteName = (siteConfig && siteConfig.site_name) ? siteConfig.site_name : 'Paralelo Comunica';
+      const siteName = escHtml((siteConfig && siteConfig.site_name) ? siteConfig.site_name : 'Paralelo Comunica');
 
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       const host = req.headers['x-forwarded-host'] || req.get('host') || 'paralelocomunica.com.br';
@@ -105,15 +157,15 @@ app.get('/noticia.html', async (req, res, next) => {
     <meta property="og:site_name" content="${siteName}">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
-    <meta property="og:image" content="${imageUrl}">
-    <meta property="og:image:secure_url" content="${imageUrl}">
+    <meta property="og:image" content="${escHtml(imageUrl)}">
+    <meta property="og:image:secure_url" content="${escHtml(imageUrl)}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="${canonicalUrl}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${title}">
     <meta name="twitter:description" content="${description}">
-    <meta name="twitter:image" content="${imageUrl}">
+    <meta name="twitter:image" content="${escHtml(imageUrl)}">
       `;
 
       let modifiedHtml = html.replace(/<title>.*?<\/title>/i, '');
@@ -132,7 +184,7 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     if (err) return next();
     try {
       const siteConfig = await getAsync('SELECT site_name, site_description, site_slogan FROM site_config WHERE id = 1');
-      const siteName = (siteConfig && siteConfig.site_name) ? siteConfig.site_name : 'Paralelo Comunica';
+      const siteName = escHtml((siteConfig && siteConfig.site_name) ? siteConfig.site_name : 'Paralelo Comunica');
       const siteDesc = (siteConfig && siteConfig.site_description) ? siteConfig.site_description : 'O seu portal de notícias com conteúdo atualizado e reportagem 24 horas do Brasil e do Mundo.';
 
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -152,15 +204,15 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     <meta property="og:site_name" content="${siteName}">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
-    <meta property="og:image" content="${imageUrl}">
-    <meta property="og:image:secure_url" content="${imageUrl}">
+    <meta property="og:image" content="${escHtml(imageUrl)}">
+    <meta property="og:image:secure_url" content="${escHtml(imageUrl)}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="${canonicalUrl}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${title}">
     <meta name="twitter:description" content="${description}">
-    <meta name="twitter:image" content="${imageUrl}">
+    <meta name="twitter:image" content="${escHtml(imageUrl)}">
       `;
 
       let modifiedHtml = html.replace(/<title>.*?<\/title>/i, '');
@@ -585,10 +637,11 @@ app.delete('/api/admin/ads/:id', requireAdmin, async (req, res) => {
     if (ad) {
       const fs = require('fs');
       const path = require('path');
+      const uploadsRoot = path.join(__dirname, 'public', 'uploads');
       [ad.image_url, ad.video_url].forEach(url => {
         if (url && url.startsWith('/uploads/')) {
-          const filePath = path.join(__dirname, 'public', url);
-          if (fs.existsSync(filePath)) {
+          const filePath = path.resolve(uploadsRoot, path.basename(url));
+          if (filePath.startsWith(uploadsRoot) && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
           }
         }
