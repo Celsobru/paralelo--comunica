@@ -88,6 +88,7 @@ app.use((req, res, next) => {
     p.includes('/.') ||
     /\.(txt|sqlite|sqlite3|db|sql|log|env|bak|old|orig|zip|tar|gz|rar|pem|key|crt|p12|bat|cmd|sh|ps1|yml|yaml|ini|conf)$/.test(p) ||
     /^\/(server|db|check_db|rss-monitor|whatsapp-bot)[^/]*\.js$/.test(p) ||
+    /^\/(package|package-lock)\.json$/.test(p) ||
     /^\/(fix|test|check|debug|scan|dbscan|audit|crack|cleanup|restore|backup)[^/]*\.js$/.test(p) ||
     (p.startsWith('/uploads/') && /\.(php|phtml|html?|svg|js|sh|exe|bat|cmd)$/.test(p));
   if (blocked) return res.status(404).send('Not found');

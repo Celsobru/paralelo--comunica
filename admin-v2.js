@@ -1,3 +1,8 @@
+// Escapa URLs (bloqueia javascript:) para uso em href/src
+function escUrl(u) {
+  var x = String(u === undefined || u === null ? '' : u).trim();
+  return /^https?:\/\//i.test(x) ? escapeHtml(x) : '#';
+}
 const sectionTitles = {
   dashboard: 'Dashboard',
   news: 'Gerenciar Notícias',
@@ -287,9 +292,9 @@ function renderDashboardSpacesTable(spaces) {
   }
   table.innerHTML = spaces.map(s => `
     <tr>
-      <td><strong><span class="wm-num" style="background:${s.availability === 'available' ? 'var(--success)' : 'var(--danger)'}; font-size:0.65rem; width:20px; height:20px; display:inline-flex;">${posNum[s.position] || '?'}</span> ${s.name}</strong></td>
+      <td><strong><span class="wm-num" style="background:${s.availability === 'available' ? 'var(--success)' : 'var(--danger)'}; font-size:0.65rem; width:20px; height:20px; display:inline-flex;">${posNum[s.position] || '?'}</span> ${escapeHtml(s.name)}</strong></td>
       <td>${positionLabels[s.position] || s.position}</td>
-      <td>${s.width} x ${s.height}</td>
+      <td>${escapeHtml(s.width)} x ${escapeHtml(s.height)}</td>
       <td>R$ ${(s.price_cents / 100).toFixed(2)}/mes</td>
       <td>${badgeForStatus(s.availability)}</td>
       <td>${s.occupied_by || '-'}</td>
@@ -350,8 +355,8 @@ async function loadNews() {
   }
   table.innerHTML = news.map(item => `
     <tr>
-      <td><strong>${item.title}</strong></td>
-      <td>${item.category} ${item.subcategory ? `<br><small style="color:var(--accent);font-weight:600;">(${item.subcategory})</small>` : ''}</td>
+      <td><strong>${escapeHtml(item.title)}</strong></td>
+      <td>${escapeHtml(item.category)} ${item.subcategory ? `<br><small style="color:var(--accent);font-weight:600;">(${escapeHtml(item.subcategory)})</small>` : ''}</td>
       <td>${badgeForStatus(item.status)}</td>
       <td>${item.created_at || '-'}</td>
       <td class="actions">
@@ -424,9 +429,9 @@ async function loadClients() {
   }
   table.innerHTML = clients.map(item => `
     <tr>
-      <td><strong>${item.name}</strong></td>
-      <td>${item.email}</td>
-      <td>${item.company_name || '-'}</td>
+      <td><strong>${escapeHtml(item.name)}</strong></td>
+      <td>${escapeHtml(item.email)}</td>
+      <td>${escapeHtml(item.company_name || '-')}</td>
       <td>${item.phone || '-'}</td>
       <td class="actions">
         <button data-id="${item.id}" class="btn btn-sm btn-edit edit-client">Editar</button>
@@ -467,7 +472,7 @@ async function loadAdSpaces() {
   }
   table.innerHTML = spaces.map(item => `
     <tr>
-      <td><strong>${item.name}</strong></td>
+      <td><strong>${escapeHtml(item.name)}</strong></td>
       <td>${positionLabels[item.position] || item.position}</td>
       <td>R$ ${(item.price_cents / 100).toFixed(2)}</td>
       <td>${item.active ? badgeForStatus('active') : badgeForStatus('inactive')}</td>
@@ -478,7 +483,7 @@ async function loadAdSpaces() {
   `).join('');
   if (select) {
     select.innerHTML = spaces.map(item =>
-      `<option value="${item.id}">${item.name} (${item.width}x${item.height})</option>`
+      `<option value="${item.id}">${escapeHtml(item.name)} (${escapeHtml(item.width)}x${escapeHtml(item.height)})</option>`
     ).join('');
   }
   if (newsSpaceSelect) {
@@ -487,7 +492,7 @@ async function loadAdSpaces() {
     const sorted = spaces.slice().sort((a, b) => posOrder.indexOf(a.position) - posOrder.indexOf(b.position));
     newsSpaceSelect.innerHTML = '<option value="">Nenhum (Noticia normal)</option>' +
       sorted.map(item =>
-        `<option value="${item.id}">Campo ${posNum[item.position] || '?'} - ${item.name} (${item.width}x${item.height}) - R$ ${(item.price_cents / 100).toFixed(0)}/mes</option>`
+        `<option value="${item.id}">Campo ${posNum[item.position] || '?'} - ${escapeHtml(item.name)} (${escapeHtml(item.width)}x${escapeHtml(item.height)}) - R$ ${(item.price_cents / 100).toFixed(0)}/mes</option>`
       ).join('');
   }
 
@@ -517,9 +522,9 @@ async function loadAds() {
   }
   table.innerHTML = ads.map(item => `
     <tr>
-      <td><strong>${item.title}</strong></td>
-      <td>${item.client_name}</td>
-      <td>${item.space_name}</td>
+      <td><strong>${escapeHtml(item.title)}</strong></td>
+      <td>${escapeHtml(item.client_name)}</td>
+      <td>${escapeHtml(item.space_name)}</td>
       <td>
         ${badgeForStatus(item.status)}
         ${item.is_bonus ? '<span class="badge" style="background:#8b5cf6;color:#fff;margin-left:4px;">🎁 Cortesia</span>' : '<span class="badge" style="background:#059669;color:#fff;margin-left:4px;">💵 Faturado</span>'}
@@ -548,11 +553,11 @@ async function loadAds() {
 
       const imgPrev = document.getElementById('admin-ad-current-image-preview');
       if (imgPrev) {
-        imgPrev.innerHTML = a.image_url ? `<span style="font-size:0.85rem;color:var(--text);">🖼 <strong>Imagem atual:</strong> <a href="${a.image_url}" target="_blank" style="color:var(--accent);">Ver imagem atual</a><br><img src="${a.image_url}" style="max-height:60px;border-radius:4px;margin-top:4px;border:1px solid var(--border);"><br><small style="color:var(--muted);">(Se não selecionar um novo arquivo, a imagem acima será mantida)</small></span>` : '';
+        imgPrev.innerHTML = a.image_url ? `<span style="font-size:0.85rem;color:var(--text);">🖼 <strong>Imagem atual:</strong> <a href="${escUrl(a.image_url)}" target="_blank" rel="noopener" style="color:var(--accent);">Ver imagem atual</a><br><img src="${escUrl(a.image_url)}" style="max-height:60px;border-radius:4px;margin-top:4px;border:1px solid var(--border);"><br><small style="color:var(--muted);">(Se não selecionar um novo arquivo, a imagem acima será mantida)</small></span>` : '';
       }
       const vidPrev = document.getElementById('admin-ad-current-video-preview');
       if (vidPrev) {
-        vidPrev.innerHTML = a.video_url ? `<span style="font-size:0.85rem;color:var(--text);">🎥 <strong>Vídeo atual:</strong> <a href="${a.video_url}" target="_blank" style="color:var(--accent);">Ver vídeo atual</a><br><small style="color:var(--muted);">(Se não selecionar um novo arquivo, o vídeo acima será mantido)</small></span>` : '';
+        vidPrev.innerHTML = a.video_url ? `<span style="font-size:0.85rem;color:var(--text);">🎥 <strong>Vídeo atual:</strong> <a href="${escUrl(a.video_url)}" target="_blank" rel="noopener" style="color:var(--accent);">Ver vídeo atual</a><br><small style="color:var(--muted);">(Se não selecionar um novo arquivo, o vídeo acima será mantido)</small></span>` : '';
       }
 
       if (a.video_url) {
@@ -587,8 +592,8 @@ async function loadNotifications() {
   }
   table.innerHTML = notes.map(item => `
     <tr>
-      <td><strong>${item.title}</strong></td>
-      <td>${item.audience}</td>
+      <td><strong>${escapeHtml(item.title)}</strong></td>
+      <td>${escapeHtml(item.audience)}</td>
       <td>${badgeForStatus(item.status)}</td>
       <td>${item.sent_at || '-'}</td>
       <td>
@@ -969,11 +974,11 @@ async function loadRssSources() {
   }
   table.innerHTML = sources.map(s => `
     <tr>
-      <td><strong>${s.name}</strong></td>
-      <td><a href="${s.feed_url}" target="_blank" style="color:var(--accent);font-size:0.8rem;">${s.feed_url}</a></td>
+      <td><strong>${escapeHtml(s.name)}</strong></td>
+      <td><a href="${escUrl(s.feed_url)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:0.8rem;">${escapeHtml(s.feed_url)}</a></td>
       <td>${s.active ? badgeForStatus('active') : badgeForStatus('inactive')}</td>
       <td class="actions">
-        <button data-id="${s.id}" data-name="${s.name}" data-url="${s.feed_url}" data-active="${s.active}" class="btn btn-sm btn-edit edit-rss-source">Editar</button>
+        <button data-id="${s.id}" data-name="${escapeHtml(s.name)}" data-url="${escapeHtml(s.feed_url)}" data-active="${s.active}" class="btn btn-sm btn-edit edit-rss-source">Editar</button>
         <button data-id="${s.id}" class="btn btn-sm btn-delete delete-rss-source">Excluir</button>
       </td>
     </tr>
@@ -1010,7 +1015,7 @@ async function loadRssKeywords() {
   }
   table.innerHTML = keywords.map(k => `
     <tr>
-      <td><strong>${k.keyword}</strong></td>
+      <td><strong>${escapeHtml(k.keyword)}</strong></td>
       <td>${k.active ? badgeForStatus('active') : badgeForStatus('inactive')}</td>
       <td class="actions">
         <button data-id="${k.id}" class="btn btn-sm btn-delete delete-rss-keyword">Excluir</button>
@@ -1052,9 +1057,9 @@ async function loadRssArticles() {
   }
   table.innerHTML = articles.map(a => `
     <tr>
-      <td>${a.source_name || '-'}</td>
-      <td><a href="${a.link}" target="_blank" style="color:var(--accent);">${a.title}</a></td>
-      <td><span style="font-size:0.75rem;">${a.matched_keywords || '-'}</span></td>
+      <td>${escapeHtml(a.source_name || '-')}</td>
+      <td><a href="${escUrl(a.link)}" target="_blank" rel="noopener" style="color:var(--accent);">${escapeHtml(a.title)}</a></td>
+      <td><span style="font-size:0.75rem;">${escapeHtml(a.matched_keywords || '-')}</span></td>
       <td style="font-size:0.75rem;">${a.found_at || ''}</td>
     </tr>
   `).join('');
@@ -1302,8 +1307,8 @@ async function loadReservations() {
     tbody.innerHTML = reservations.map(r => `
       <tr>
         <td>#${r.id}</td>
-        <td>${r.client_name || r.client_email}</td>
-        <td>${r.space_name || r.ad_space_id}</td>
+        <td>${escapeHtml(r.client_name || r.client_email)}</td>
+        <td>${escapeHtml(r.space_name || r.ad_space_id)}</td>
         <td>${r.start_date}</td>
         <td>${r.end_date}</td>
         <td>${r.total_days}</td>

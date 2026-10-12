@@ -332,12 +332,12 @@
       document.getElementById('news-content').innerHTML =
         '<a href="/" class="back-link">&#8592; Voltar</a>' +
         '<span class="news-category">' + item.category + '</span>' +
-        '<h1 class="news-title">' + item.title + '</h1>' +
+        '<h1 class="news-title">' + escHtml(item.title) + '</h1>' +
         (item.description ? '<p class="news-summary">' + item.description + '</p>' : '') +
         '<div class="news-meta"><span>' + item.source + '</span> &middot; <span>' + (item.datetime || item.created_at || '') + '</span></div>' +
         (item.video_url
           ? '<iframe src="' + item.video_url + '" frameborder="0" allowfullscreen style="width:100%;height:450px;border-radius:8px;margin-bottom:28px;"></iframe>'
-          : '<img class="news-image" src="' + (item.image_url || item.image) + '" alt="' + item.title + '">') +
+          : '<img class="news-image" src="' + (item.image_url || item.image) + '" alt="' + escHtml(item.title) + '">') +
         '<div class="news-body">' + paragraphs + '</div>';
 
       await loadAdSlots();
@@ -371,7 +371,7 @@
       const html = items.map(item => `
         <a href="/noticia.html?news=${item.id}" target="_blank">
           <span class="ticker-track-dot">&#9679;</span>
-          <span>${item.title}</span>
+          <span>${escHtml(item.title)}</span>
         </a>
       `).join('');
       track.innerHTML = html + html;
@@ -401,7 +401,7 @@
       if(cfg.site_description) document.getElementById('footer-site-description').textContent = cfg.site_description;
       if(cfg.footer_categories) {
         const cats = cfg.footer_categories.split(',').map(c=>c.trim()).filter(Boolean);
-        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+c+'">'+c+'</a></li>').join('');
+        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+encodeURIComponent(c)+'">'+escHtml(c)+'</a></li>').join('');
       }
       if(cfg.copyright) document.getElementById('footer-copyright').innerHTML = '&copy; ' + cfg.copyright;
       function setLink(id, val) {
@@ -513,6 +513,6 @@
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
   <script src="live-modal.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

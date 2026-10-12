@@ -196,7 +196,7 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
   <script>
     fetch('/api/subscription-price').then(r=>r.json()).then(d=>{
       const btn = document.getElementById('btn-subscribe-price');
@@ -221,7 +221,7 @@
       if(cfg.site_description) document.getElementById('footer-site-description').textContent = cfg.site_description;
       if(cfg.footer_categories) {
         const cats = cfg.footer_categories.split(',').map(c=>c.trim()).filter(Boolean);
-        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+c+'">'+c+'</a></li>').join('');
+        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+encodeURIComponent(c)+'">'+escHtml(c)+'</a></li>').join('');
       }
       if(cfg.copyright) document.getElementById('footer-copyright').innerHTML = '&copy; ' + cfg.copyright;
       function setLink(id, val) {

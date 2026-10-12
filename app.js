@@ -1,3 +1,9 @@
+// Escapa HTML para evitar XSS em dados vindos da API (inclusive RSS)
+function escHtml(v) {
+  return String(v === undefined || v === null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 const defaultNews = [
   {
     id: 1,
@@ -122,9 +128,9 @@ function renderFeatured(items) {
       <div class="card-video-wrap">
         <video src="${main.video_url}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"></video>
         <div class="card-overlay">
-          <span class="card-category">${main.category}</span>
-          <h2 class="card-title">${main.title}</h2>
-          <p class="card-desc">${main.description}</p>
+          <span class="card-category">${escHtml(main.category)}</span>
+          <h2 class="card-title">${escHtml(main.title)}</h2>
+          <p class="card-desc">${escHtml(main.description)}</p>
         </div>
       </div>
     `;
@@ -132,9 +138,9 @@ function renderFeatured(items) {
     featuredNews.innerHTML = `
       <div class="card-image" style="background-image:url('${img}')"></div>
       <div class="card-overlay">
-        <span class="card-category">${main.category}</span>
-        <h2 class="card-title">${main.title}</h2>
-        <p class="card-desc">${main.description}</p>
+        <span class="card-category">${escHtml(main.category)}</span>
+        <h2 class="card-title">${escHtml(main.title)}</h2>
+        <p class="card-desc">${escHtml(main.description)}</p>
       </div>
     `;
   }
@@ -148,8 +154,8 @@ function renderSidebar(items) {
     <div class="card-side" data-id="${item.id}">
       <div class="thumb${item.video_url ? ' thumb-video' : ''}" style="background-image:url('${item.image_url || item.image}')">${item.video_url ? '<span class="play-icon-sm">&#9654;</span>' : ''}</div>
       <div class="card-info">
-        <span class="card-category">${item.category}</span>
-        <h3 class="card-title">${item.title}</h3>
+        <span class="card-category">${escHtml(item.category)}</span>
+        <h3 class="card-title">${escHtml(item.title)}</h3>
       </div>
     </div>
   `).join('');
@@ -168,12 +174,12 @@ function renderGrid(items) {
     <article class="card-news" data-id="${item.id}">
       <div class="card-image${item.video_url ? ' card-image-video' : ''}" style="background-image:url('${item.image_url || item.image}')">${item.video_url ? '<span class="play-icon">&#9654;</span>' : ''}</div>
       <div class="card-content">
-        <span class="card-category">${item.category}</span>
-        <h3 class="card-title">${item.title}</h3>
-        <p class="card-desc">${item.description}</p>
+        <span class="card-category">${escHtml(item.category)}</span>
+        <h3 class="card-title">${escHtml(item.title)}</h3>
+        <p class="card-desc">${escHtml(item.description)}</p>
         <div class="card-meta">
-          <span>${item.source}</span>
-          <span>${item.datetime || item.created_at}</span>
+          <span>${escHtml(item.source)}</span>
+          <span>${escHtml(item.datetime || item.created_at)}</span>
         </div>
       </div>
     </article>
@@ -193,10 +199,10 @@ function renderList(items) {
     <article class="news-item" data-id="${item.id}">
       <div class="item-thumb${item.video_url ? ' thumb-video' : ''}" style="background-image:url('${item.image_url || item.image}')">${item.video_url ? '<span class="play-icon-sm">&#9654;</span>' : ''}</div>
       <div class="item-content">
-        <span class="card-category">${item.category}</span>
-        <h3 class="card-title">${item.title}</h3>
-        <p class="card-desc">${item.description}</p>
-        <span class="card-meta">${item.source} &middot; ${item.datetime || item.created_at}</span>
+        <span class="card-category">${escHtml(item.category)}</span>
+        <h3 class="card-title">${escHtml(item.title)}</h3>
+        <p class="card-desc">${escHtml(item.description)}</p>
+        <span class="card-meta">${escHtml(item.source)} &middot; ${escHtml(item.datetime || item.created_at)}</span>
       </div>
     </article>
   `).join('');
@@ -237,10 +243,10 @@ function openModal(item) {
   }
 
   document.getElementById('modal-category').textContent = item.category;
-  document.getElementById('modal-title').innerHTML = `<a href="/noticia.html?news=${item.id}" target="_blank" style="color:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer;">${item.title}</a>`;
+  document.getElementById('modal-title').innerHTML = `<a href="/noticia.html?news=${item.id}" target="_blank" style="color:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer;">${escHtml(item.title)}</a>`;
   const summaryEl = document.getElementById('modal-summary');
   if (summaryEl) summaryEl.textContent = item.description || '';
-  document.getElementById('modal-meta').innerHTML = `<span>${item.source}</span> &middot; <span>${item.datetime || item.created_at}</span>`;
+  document.getElementById('modal-meta').innerHTML = `<span>${escHtml(item.source)}</span> &middot; <span>${escHtml(item.datetime || item.created_at)}</span>`;
   
   contentEl.innerHTML = fullText.split(/\r?\n/).filter(p => p.trim()).map(p => {
     let trimmed = p.trim();

@@ -263,7 +263,7 @@
 
         main.innerHTML =
           '<a href="/" class="back-link">← Voltar ao site</a>' +
-          '<h1 class="page-title">' + page.title + '</h1>' +
+          '<h1 class="page-title">' + escHtml(page.title) + '</h1>' +
           '<div class="page-body">' + (paragraphs || '<p>Conteúdo ainda não foi adicionado.</p>') + '</div>';
       } catch(e) {
         main.innerHTML =
@@ -301,7 +301,7 @@
       const html = items.map(item => `
         <a href="/noticia.html?news=${item.id}" target="_blank">
           <span class="ticker-track-dot">&#9679;</span>
-          <span>${item.title}</span>
+          <span>${escHtml(item.title)}</span>
         </a>
       `).join('');
       track.innerHTML = html + html;
@@ -331,7 +331,7 @@
       if(cfg.site_description) document.getElementById('footer-site-description').textContent = cfg.site_description;
       if(cfg.footer_categories) {
         const cats = cfg.footer_categories.split(',').map(c=>c.trim()).filter(Boolean);
-        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+c+'">'+c+'</a></li>').join('');
+        document.getElementById('footer-categories').innerHTML = cats.map(c=>'<li><a href="/?category='+encodeURIComponent(c)+'">'+escHtml(c)+'</a></li>').join('');
       }
       if(cfg.copyright) document.getElementById('footer-copyright').innerHTML = '&copy; ' + cfg.copyright;
       function setLink(id, val) {
@@ -443,6 +443,6 @@
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
   <script src="live-modal.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
