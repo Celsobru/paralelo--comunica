@@ -113,7 +113,7 @@ app.use((req, res, next) => {
 });
 // =============================================
 app.use(session({
-  secret: process.env.SESSION_SECRET || '***REMOVED***',
+  secret: process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex'),
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 24 * 60 * 60 * 1000, sameSite: 'lax' },
