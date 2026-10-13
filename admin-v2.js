@@ -72,7 +72,13 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 });
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
+  // Garante que corpo JSON seja enviado com o Content-Type correto,
+  // senao o express.json() nao parseia e req.body chega vazio.
+  const opts = { ...options };
+  if (opts.body && typeof opts.body === 'string' && !opts.headers) {
+    opts.headers = { 'Content-Type': 'application/json' };
+  }
+  const response = await fetch(url, opts);
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data.error || 'Erro na requisição');
@@ -1977,19 +1983,48 @@ async function loadUsers() {
   `).join('');
 }
 
+function setUserFormMode(editing) {
+  const title = document.getElementById('user-form-title');
+  const sub = document.getElementById('user-form-subtitle');
+  if (title) title.textContent = editing ? 'Editar Usuário' : 'Novo Usuário Administrativo';
+  if (sub) {
+    sub.textContent = editing
+      ? 'Altere os dados ou informe uma nova senha (deixe em branco para manter a atual)'
+      : 'Crie contas para outros editores ou mestres';
+  }
+}
+
+function roleLabel(role) {
+  return {
+    admin: 'Master (Acesso Total)',
+    comum: 'Comum (Apenas Edição)',
+    client: 'Cliente',
+    subscriber: 'Assinante'
+  }[role] || role;
+}
+
 function editUser(id, name, email, role) {
+  const roleSelect = document.getElementById('user-role-input');
+  if (role && !Array.from(roleSelect.options).some(o => o.value === role)) {
+    const opt = document.createElement('option');
+    opt.value = role;
+    opt.textContent = roleLabel(role);
+    roleSelect.appendChild(opt);
+  }
   document.getElementById('user-id').value = id;
   document.getElementById('user-name-input').value = name;
   document.getElementById('user-email-input').value = email;
-  document.getElementById('user-role-input').value = role;
+  if (role) roleSelect.value = role;
   document.getElementById('user-password-input').value = '';
   document.getElementById('user-password-input').placeholder = 'Deixe em branco para manter a atual';
+  setUserFormMode(true);
 }
 
 document.getElementById('btn-user-cancel').addEventListener('click', () => {
   document.getElementById('user-id').value = '';
   document.getElementById('user-form').reset();
   document.getElementById('user-password-input').placeholder = 'Obrigatório para novo';
+  setUserFormMode(false);
 });
 
 document.getElementById('user-form')?.addEventListener('submit', async event => {
@@ -2012,6 +2047,8 @@ document.getElementById('user-form')?.addEventListener('submit', async event => 
     }
     document.getElementById('user-form').reset();
     document.getElementById('user-id').value = '';
+    document.getElementById('user-password-input').placeholder = 'Obrigatório para novo';
+    setUserFormMode(false);
     loadUsers();
   } catch (err) {
     alert(err.message || 'Erro ao salvar usuário');
