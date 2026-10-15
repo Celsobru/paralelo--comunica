@@ -190,6 +190,13 @@ db.serialize(() => {
     finished_at TEXT
   )`);
 
+  // migracao: coluna de anexos (JSON) na campanha
+  db.all('PRAGMA table_info(email_campaigns)', (err, cols) => {
+    if (!err && cols && !cols.some(c => c.name === 'attachments')) {
+      db.run("ALTER TABLE email_campaigns ADD COLUMN attachments TEXT DEFAULT '[]'");
+    }
+  });
+
   db.run(`CREATE TABLE IF NOT EXISTS email_recipients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     campaign_id INTEGER NOT NULL,

@@ -3,10 +3,28 @@
    ============================================================ */
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const mailer = require('./mailer');
 const { runAsync, getAsync, allAsync } = require('./db');
 
 function mask(p) { p = String(p || ''); return p ? (p.slice(0, 2) + '***' + p.slice(-2)) : ''; }
+
+/* ---------- upload de anexos ---------- */
+if (!fs.existsSync(mailer.ATT_DIR)) { try { fs.mkdirSync(mailer.ATT_DIR, { recursive: true }); } catch (e) {} }
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, mailer.ATT_DIR),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1e6) + '-' + String(file.originalname).replace(/[^\w.\-]/g, '_')),
+  }),
+  limits: { fileSize: 15 * 1024 * 1024, files: 1 },
+});
+
+router.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado.' });
+  res.json({ success: true, attachment: { filename: req.file.originalname, path: req.file.path, size: req.file.size } });
+});
 
 /* ---------- config ---------- */
 router.get('/config', async (req, res) => {
@@ -81,6 +99,7 @@ router.post('/campaigns', async (req, res) => {
       body_html: b.body_html || '',
       audience: b.audience || 'all',
       customList: b.customList || '',
+      attachments: b.attachments || [],
     });
     res.json({ success: true, ...out });
   } catch (e) { res.status(400).json({ success: false, error: e.message }); }

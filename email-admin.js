@@ -3,6 +3,8 @@
    Requer fetchJson() (de admin-v2.js) e a secao #section-emailmarketing
    ============================================================ */
 var _emailInited = false;
+var _emailAttachments = [];
+var _emailHtmlMode = false;
 
 function emailEsc(v) {
   return String(v === undefined || v === null ? '' : v)
@@ -12,7 +14,7 @@ function emailEsc(v) {
 
 var EMAIL_STATUS_LABEL = { draft: 'Rascunho', sending: 'Enviando', paused: 'Pausada', done: 'Concluida', failed: 'Falhou' };
 var EMAIL_STATUS_CLASS = { draft: 'badge-draft', sending: 'badge-active', paused: 'badge-paused', done: 'badge-active', failed: 'badge-inactive' };
-var EMAIL_AUD_LABEL = { all: 'Todos', subscribers: 'Assinantes', clients: 'Clientes', custom: 'Lista colada' };
+var EMAIL_AUD_LABEL = { all: 'Todos', subscribers: 'Assinantes', clients: 'Clientes', custom: 'Minha lista' };
 
 function emailMsg(id, text, type) {
   var m = document.getElementById(id);
@@ -26,6 +28,189 @@ function emailCard(label, value) {
     '<div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted,#888);">' + emailEsc(label) + '</div>' +
     '<div style="font-size:1.3rem;font-weight:700;margin-top:5px;">' + emailEsc(value) + '</div></div>';
 }
+
+/* ---------------- editor visual ---------------- */
+
+function emEditor() { return document.getElementById('em-editor'); }
+function emBody() { return document.getElementById('em-body'); }
+
+function syncEditorToTextarea() {
+  if (_emailHtmlMode) return;
+  var ed = emEditor(), t = emBody();
+  if (ed && t) t.value = ed.innerHTML;
+}
+
+function getEmailBody() {
+  if (_emailHtmlMode) { var t = emBody(); return t ? t.value : ''; }
+  var ed = emEditor(); return ed ? ed.innerHTML : '';
+}
+
+function setEmailBody(html) {
+  var ed = emEditor(); if (ed) ed.innerHTML = html || '';
+  var t = emBody(); if (t) t.value = html || '';
+}
+
+function toggleEmailHtmlMode() {
+  _emailHtmlMode = !_emailHtmlMode;
+  var ed = emEditor(), t = emBody(), tb = document.getElementById('em-toolbar'), btn = document.getElementById('em-html-toggle');
+  if (_emailHtmlMode) {
+    if (t) { t.value = ed ? ed.innerHTML : ''; t.style.display = 'block'; }
+    if (ed) ed.style.display = 'none';
+    if (tb) tb.style.display = 'none';
+    if (btn) btn.textContent = 'Editor visual';
+  } else {
+    if (ed) { ed.innerHTML = t ? t.value : ''; ed.style.display = 'block'; }
+    if (t) t.style.display = 'none';
+    if (tb) tb.style.display = 'flex';
+    if (btn) btn.textContent = 'Ver HTML';
+  }
+}
+
+function initEmailEditor() {
+  var toolbar = document.getElementById('em-toolbar');
+  if (toolbar) toolbar.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('button[data-cmd]') : null;
+    if (!b) return;
+    ev.preventDefault();
+    var cmd = b.getAttribute('data-cmd');
+    var ed = emEditor();
+    if (ed) ed.focus();
+    if (cmd === 'createLink') {
+      var url = prompt('Endereco do link (https://...):', 'https://');
+      if (url) document.execCommand('createLink', false, url);
+    } else if (cmd === 'insertImage') {
+      var img = prompt('URL da imagem (https://...):', 'https://');
+      if (img) document.execCommand('insertImage', false, img);
+    } else {
+      document.execCommand(cmd, false, null);
+    }
+    syncEditorToTextarea();
+  });
+
+  var tn = document.getElementById('em-insert-name');
+  if (tn) tn.addEventListener('click', function () {
+    var ed = emEditor();
+    if (!_emailHtmlMode && ed) { ed.focus(); try { document.execCommand('insertText', false, '{nome}'); } catch (e) { ed.innerHTML += '{nome}'; } syncEditorToTextarea(); }
+    else { var t = emBody(); if (t) t.value += '{nome}'; }
+  });
+
+  var ht = document.getElementById('em-html-toggle');
+  if (ht) ht.addEventListener('click', toggleEmailHtmlMode);
+
+  var ed2 = emEditor();
+  if (ed2) ed2.addEventListener('input', syncEditorToTextarea);
+
+  var imp = document.getElementById('em-import');
+  if (imp) imp.addEventListener('change', importEmailList);
+
+  var att = document.getElementById('em-attachment');
+  if (att) att.addEventListener('change', uploadEmailAttachment);
+
+  renderEmailAttachments();
+}
+
+/* ---------------- importar lista (CSV / TXT) ---------------- */
+
+function splitCsvLine(line, delim) {
+  var out = [], cur = '', q = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+    else if (ch === delim && !q) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out.map(function (s) { return s.trim(); });
+}
+
+function parseCsvToContacts(text) {
+  var lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+  if (!lines.length) return [];
+  var first = lines[0];
+  var delim = ',';
+  if ((first.match(/;/g) || []).length > (first.match(/,/g) || []).length) delim = ';';
+  if ((first.match(/\t/g) || []).length > (first.match(/[,;]/g) || []).length) delim = '\t';
+  var cells = splitCsvLine(first, delim);
+  var emailIdx = -1, nameIdx = -1;
+  var hasHeader = cells.some(function (c) { return /e-?mail/i.test(c); });
+  if (hasHeader) cells.forEach(function (c, i) {
+    if (emailIdx === -1 && /e-?mail/i.test(c)) emailIdx = i;
+    else if (nameIdx === -1 && /nome|name|contato|cliente|razao|empresa/i.test(c)) nameIdx = i;
+  });
+  var out = [], seen = {}, re = /[^\s<>,;"']+@[^\s<>,;"']+\.[^\s<>,;"']+/;
+  var dataLines = hasHeader ? lines.slice(1) : lines;
+  dataLines.forEach(function (line) {
+    var parts = splitCsvLine(line, delim);
+    var email = '';
+    if (emailIdx >= 0 && parts[emailIdx]) { var m = parts[emailIdx].match(re); email = m ? m[0] : ''; }
+    if (!email) { var m2 = line.match(re); email = m2 ? m2[0] : ''; }
+    if (!email) return;
+    email = email.toLowerCase();
+    if (seen[email]) return; seen[email] = 1;
+    var name = '';
+    if (nameIdx >= 0 && parts[nameIdx]) name = parts[nameIdx];
+    else for (var k = 0; k < parts.length; k++) {
+      if (parts[k] && !re.test(parts[k]) && !/^[+\d()\-\s.]+$/.test(parts[k])) { name = parts[k]; break; }
+    }
+    name = String(name || '').replace(/[<>,;"']/g, ' ').replace(/\s+/g, ' ').trim();
+    out.push(name ? (name + ',' + email) : email);
+  });
+  return out;
+}
+
+function importEmailList(ev) {
+  var f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  var reader = new FileReader();
+  reader.onload = function () {
+    var rows = parseCsvToContacts(reader.result);
+    var ta = document.getElementById('em-custom');
+    if (ta && rows.length) {
+      var cur = ta.value.trim();
+      ta.value = (cur ? cur + '\n' : '') + rows.join('\n');
+    }
+    emailMsg('em-msg', rows.length ? ('Importados ' + rows.length + ' contatos.') : 'Nenhum e-mail encontrado no arquivo.', rows.length ? 'ok' : 'error');
+    updateEmailCount();
+  };
+  reader.onerror = function () { emailMsg('em-msg', 'Falha ao ler o arquivo.', 'error'); };
+  reader.readAsText(f);
+  ev.target.value = '';
+}
+
+/* ---------------- anexos ---------------- */
+
+function renderEmailAttachments() {
+  var box = document.getElementById('em-attachments');
+  if (!box) return;
+  if (!_emailAttachments.length) { box.innerHTML = '<span style="color:#888;">Nenhum anexo.</span>'; return; }
+  box.innerHTML = _emailAttachments.map(function (a, i) {
+    var kb = Math.round((a.size || 0) / 1024);
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">&#128206; ' + emailEsc(a.filename) +
+      ' <small style="color:#888;">(' + kb + ' KB)</small> ' +
+      '<button type="button" class="btn btn-secondary" style="padding:2px 8px;font-size:.75rem;color:#e74c3c;" onclick="removeEmailAttachment(' + i + ')">remover</button></div>';
+  }).join('');
+}
+
+function removeEmailAttachment(i) { _emailAttachments.splice(i, 1); renderEmailAttachments(); }
+
+async function uploadEmailAttachment(ev) {
+  var f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  emailMsg('em-msg', 'Enviando anexo...');
+  try {
+    var fd = new FormData();
+    fd.append('file', f);
+    var res = await fetch('/api/admin/email/upload', { method: 'POST', credentials: 'same-origin', body: fd });
+    var r = await res.json().catch(function () { return {}; });
+    if (!res.ok || !r.attachment) throw new Error(r.error || 'Falha no envio do anexo.');
+    _emailAttachments.push(r.attachment);
+    emailMsg('em-msg', 'Anexo adicionado.', 'ok');
+    renderEmailAttachments();
+  } catch (e) { emailMsg('em-msg', e.message, 'error'); }
+  ev.target.value = '';
+}
+
+/* ---------------- inicializacao ---------------- */
 
 function initEmailSection() {
   if (_emailInited) { loadEmailStats(); loadEmailCampaigns(); loadEmailSuppressions(); return; }
@@ -60,6 +245,8 @@ function initEmailSection() {
 
   var refresh = document.getElementById('btn-email-refresh');
   if (refresh) refresh.addEventListener('click', function () { loadEmailSuppressions(); loadEmailCampaigns(); loadEmailStats(); });
+
+  initEmailEditor();
 
   loadEmailConfig();
   loadEmailStats();
@@ -130,16 +317,25 @@ async function updateEmailCount() {
 async function submitEmailCampaign(ev) {
   ev.preventDefault();
   var subject = (document.getElementById('em-subject') || {}).value || '';
-  var body = (document.getElementById('em-body') || {}).value || '';
+  var body = getEmailBody();
   var audience = (document.getElementById('em-audience') || {}).value || 'all';
   var customList = (document.getElementById('em-custom') || {}).value || '';
-  if (!subject.trim() || !body.trim()) { emailMsg('em-msg', 'Preencha assunto e conteudo.', 'error'); return; }
+  if (!subject.trim() || !String(body).trim() || String(body).replace(/<[^>]*>/g, '').trim() === '') {
+    emailMsg('em-msg', 'Preencha assunto e mensagem.', 'error'); return;
+  }
   emailMsg('em-msg', 'Criando campanha...');
   try {
-    var r = await fetchJson('/api/admin/email/campaigns', { method: 'POST', body: JSON.stringify({ subject: subject.trim(), body_html: body, audience: audience, customList: customList }) });
+    var r = await fetchJson('/api/admin/email/campaigns', {
+      method: 'POST',
+      body: JSON.stringify({ subject: subject.trim(), body_html: body, audience: audience, customList: customList, attachments: _emailAttachments })
+    });
     emailMsg('em-msg', 'Campanha criada com ' + r.total + ' destinatarios. Clique em Iniciar para comecar o envio.', 'ok');
-    document.getElementById('email-campaign-form').reset();
+    var f = document.getElementById('email-campaign-form'); if (f) f.reset();
     var w = document.getElementById('em-custom-wrap'); if (w) w.classList.add('hidden');
+    if (_emailHtmlMode) toggleEmailHtmlMode();
+    setEmailBody('');
+    _emailAttachments = [];
+    renderEmailAttachments();
     loadEmailCampaigns(); loadEmailStats(); updateEmailCount();
   } catch (e) { emailMsg('em-msg', e.message, 'error'); }
 }

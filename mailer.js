@@ -105,6 +105,36 @@ function unsubLink(cfg, email) {
 
 /* ---------------- publico (audience) ---------------- */
 
+/* Aceita varias formas:
+   - um e-mail por linha:            email@x.com
+   - "Nome <email@x.com>"
+   - "Nome,email@x.com"  ou  "email@x.com,Nome"
+   - varios e-mails na mesma linha separados por virgula/ponto-e-virgula */
+function parseCustomList(raw) {
+  const text = String(raw || '').replace(/\u00a0/g, ' ');
+  const chunks = [];
+  const emailRe = /[^\s<>,;"']+@[^\s<>,;"']+\.[^\s<>,;"']+/g;
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    if (line.includes('<')) { chunks.push(line); continue; }
+    const emails = line.match(emailRe) || [];
+    if (emails.length === 1 && line.includes(',')) { chunks.push(line); continue; }
+    line.split(/[,;]+/).forEach(p => { if (p.trim()) chunks.push(p.trim()); });
+  }
+  const out = [];
+  const seen = new Set();
+  for (const c of chunks) {
+    const m = c.match(/[^\s<>,;"']+@[^\s<>,;"']+\.[^\s<>,;"']+/);
+    if (!m) continue;
+    const email = m[0].toLowerCase();
+    let name = c.replace(m[0], '').replace(/[<>,;"']/g, ' ').replace(/\s+/g, ' ').trim();
+    if (seen.has(email)) continue;
+    seen.add(email);
+    out.push({ email, name });
+  }
+  return out;
+}
+
 async function resolveAudience(audience, customList) {
   let rows = [];
   const subscribers = () => allAsync("SELECT DISTINCT u.name AS name, u.email AS email FROM users u WHERE u.role = 'subscriber' AND u.email IS NOT NULL AND TRIM(u.email) <> ''");
@@ -112,10 +142,7 @@ async function resolveAudience(audience, customList) {
   if (audience === 'subscribers') rows = await subscribers();
   else if (audience === 'clients') rows = await clients();
   else if (audience === 'all') rows = [...(await subscribers()), ...(await clients())];
-  else if (audience === 'custom') {
-    const list = String(customList || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
-    rows = list.map(e => ({ name: '', email: e }));
-  }
+  else if (audience === 'custom') rows = parseCustomList(customList);
   // dedupe + valida email
   const seen = new Set();
   const out = [];
@@ -150,6 +177,27 @@ async function isSuppressed(email) {
   return !!r;
 }
 
+/* ---------------- anexos ---------------- */
+
+const path = require('path');
+const ATT_DIR = path.join(__dirname, 'data', 'email-attachments');
+
+function normalizeAttachments(list) {
+  const out = [];
+  (Array.isArray(list) ? list : []).forEach(a => {
+    if (!a || !a.path) return;
+    const p = String(a.path);
+    // seguranca: so anexa arquivos enviados por nos (dentro da pasta de anexos)
+    if (!p.startsWith(ATT_DIR)) return;
+    out.push({ filename: String(a.filename || 'anexo').slice(0, 200), path: p });
+  });
+  return out;
+}
+
+function safeParseAttachments(v) {
+  try { const a = JSON.parse(v || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+
 /* ---------------- personalizacao ---------------- */
 
 function personalize(text, rec) {
@@ -174,7 +222,7 @@ async function sendMail(cfg, to, subject, html, opts) {
   const link = unsubLink(cfg, email);
   const footer = unsubFooter(cfg, email);
   const fullHtml = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, footer + '</body>') : (html + footer);
-  return t.sendMail({
+  const msg = {
     from: fromHeader(cfg),
     to: to,
     replyTo: (opts && opts.replyTo) || cfg.reply_to || undefined,
@@ -184,7 +232,10 @@ async function sendMail(cfg, to, subject, html, opts) {
       'List-Unsubscribe': `<mailto:${cfg.reply_to || cfg.from_email}?subject=unsubscribe>, <${link}>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
-  });
+  };
+  const atts = normalizeAttachments(opts && opts.attachments);
+  if (atts.length) msg.attachments = atts.map(a => ({ filename: a.filename, path: a.path }));
+  return t.sendMail(msg);
 }
 
 async function sendTest(to) {
@@ -198,13 +249,14 @@ async function sendTest(to) {
 
 /* ---------------- criar campanha ---------------- */
 
-async function createCampaign({ subject, body_html, audience, customList }) {
+async function createCampaign({ subject, body_html, audience, customList, attachments }) {
   if (!subject || !body_html) throw new Error('Assunto e conteúdo são obrigatórios.');
   const recipients = await resolveAudience(audience, customList);
   if (!recipients.length) throw new Error('Nenhum destinatário válido encontrado.');
+  const atts = normalizeAttachments(attachments);
   const r = await runAsync(
-    "INSERT INTO email_campaigns (subject, body_html, audience, status, total, sent_count, failed_count, created_at) VALUES (?, ?, ?, 'draft', ?, 0, 0, datetime('now','localtime'))",
-    [subject, body_html, audience, recipients.length]
+    "INSERT INTO email_campaigns (subject, body_html, audience, status, total, sent_count, failed_count, attachments, created_at) VALUES (?, ?, ?, 'draft', ?, 0, 0, ?, datetime('now','localtime'))",
+    [subject, body_html, audience, recipients.length, JSON.stringify(atts)]
   );
   const campaignId = r.lastID;
   for (const rec of recipients) {
@@ -269,7 +321,8 @@ async function processOnce() {
 
     lastSendAt = Date.now();
     try {
-      await sendMail(cfg, rec.email, personalize(camp.subject, rec), personalize(camp.body_html, rec), {});
+      const atts = safeParseAttachments(camp.attachments);
+      await sendMail(cfg, rec.email, personalize(camp.subject, rec), personalize(camp.body_html, rec), { attachments: atts });
       await runAsync("UPDATE email_recipients SET status = 'sent', sent_at = datetime('now','localtime'), error = '' WHERE id = ?", [rec.id]);
       await runAsync('UPDATE email_campaigns SET sent_count = sent_count + 1 WHERE id = ?', [camp.id]);
     } catch (err) {
@@ -327,8 +380,9 @@ async function stats() {
 
 module.exports = {
   getConfig, saveConfig,
-  resolveAudience, countAudience,
+  resolveAudience, countAudience, parseCustomList,
   suppress, isSuppressed, unsubToken, normEmail, setDefaultBase,
   createCampaign, startCampaign, pauseCampaign,
   sendTest, processOnce, startWorker, stats,
+  ATT_DIR, normalizeAttachments,
 };

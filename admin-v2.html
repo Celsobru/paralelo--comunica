@@ -1146,24 +1146,51 @@
                 </label>
                 <label>Público
                   <select id="em-audience">
-                    <option value="all">Todos (Assinantes + Clientes)</option>
-                    <option value="subscribers">Assinantes</option>
-                    <option value="clients">Clientes</option>
-                    <option value="custom">Lista colada (e-mails)</option>
+                    <option value="all">Todos (Assinantes + Clientes do site)</option>
+                    <option value="subscribers">Assinantes do site</option>
+                    <option value="clients">Clientes do site</option>
+                    <option value="custom">Minha própria lista (colar ou importar)</option>
                   </select>
                 </label>
                 <label style="justify-content:flex-end;">
                   <span id="em-count" style="font-size:0.85rem;color:var(--text-muted,#888);">—</span>
                 </label>
-                <label class="full-width hidden" id="em-custom-wrap">E-mails (separe por vírgula ou linha)
-                  <textarea id="em-custom" rows="3" placeholder="a@x.com, b@y.com"></textarea>
-                </label>
-                <label class="full-width">Conteúdo (HTML permitido)
-                  <textarea id="em-body" rows="10" placeholder="<h2>Olá {nome}!</h2><p>Sua mensagem...</p>" required></textarea>
-                </label>
-                <div class="full-width" style="font-size:0.8rem;color:var(--text-muted,#888);margin-bottom:8px;">
-                  Personalize com <b>{nome}</b> e <b>{email}</b>. O link de descadastro é adicionado automaticamente.
+
+                <div class="full-width hidden" id="em-custom-wrap" style="border:1px dashed #ccc;border-radius:10px;padding:12px;">
+                  <div style="font-size:.85rem;margin-bottom:6px;">Cole a lista <b>ou</b> importe um arquivo <b>CSV/TXT</b> (Excel/Contatos do Zoho):</div>
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+                    <input type="file" id="em-import" accept=".csv,.txt" style="font-size:.85rem;">
+                    <span style="font-size:.75rem;color:#888;">aceita “email”, “Nome,email” ou “Nome &lt;email&gt;”</span>
+                  </div>
+                  <textarea id="em-custom" rows="5" placeholder="um contato por linha, ex:&#10;joao@x.com&#10;Maria,maria@y.com&#10;Ana &lt;ana@z.com&gt;"></textarea>
                 </div>
+
+                <div class="full-width">
+                  <div style="font-size:.85rem;margin-bottom:6px;">Mensagem</div>
+                  <div id="em-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+                    <button type="button" class="btn btn-secondary" data-cmd="bold" style="padding:4px 10px;font-weight:bold;">B</button>
+                    <button type="button" class="btn btn-secondary" data-cmd="italic" style="padding:4px 10px;font-style:italic;">I</button>
+                    <button type="button" class="btn btn-secondary" data-cmd="underline" style="padding:4px 10px;text-decoration:underline;">U</button>
+                    <button type="button" class="btn btn-secondary" data-cmd="insertUnorderedList" style="padding:4px 10px;">• Lista</button>
+                    <button type="button" class="btn btn-secondary" data-cmd="createLink" style="padding:4px 10px;">🔗 Link</button>
+                    <button type="button" class="btn btn-secondary" data-cmd="insertImage" style="padding:4px 10px;">🖼 Imagem</button>
+                    <button type="button" class="btn btn-secondary" id="em-insert-name" style="padding:4px 10px;">{nome}</button>
+                    <button type="button" class="btn btn-secondary" id="em-html-toggle" style="padding:4px 10px;">Ver HTML</button>
+                  </div>
+                  <div id="em-editor" contenteditable="true" style="min-height:220px;max-height:520px;overflow:auto;border:1px solid #ccc;border-radius:8px;padding:12px;background:#fff;"></div>
+                  <textarea id="em-body" rows="10" style="display:none;font-family:monospace;font-size:.85rem;" placeholder="<h2>Olá {nome}!</h2><p>Sua mensagem...</p>"></textarea>
+                </div>
+
+                <div class="full-width" style="font-size:0.8rem;color:var(--text-muted,#888);margin-bottom:8px;">
+                  Personalize com <b>{nome}</b> e <b>{email}</b> (o editor insere sozinho). O link de descadastro entra automaticamente no rodapé.
+                </div>
+
+                <div class="full-width">
+                  <div style="font-size:.85rem;margin-bottom:6px;">Anexos (opcional)</div>
+                  <input type="file" id="em-attachment" style="font-size:.9rem;">
+                  <div id="em-attachments" style="font-size:.85rem;margin-top:6px;"></div>
+                </div>
+
                 <div class="form-actions full-width" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                   <button type="submit" class="btn btn-primary">Criar campanha</button>
                   <span id="em-msg" style="font-size:0.85rem;"></span>
@@ -1406,6 +1433,6 @@
   </div>
 
   <script src="admin-v2.js?v=6"></script>
-<script src="email-admin.js?v=1"></script>
+<script src="email-admin.js?v=2"></script>
 </body>
 </html>
