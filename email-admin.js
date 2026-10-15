@@ -320,7 +320,10 @@ async function submitEmailCampaign(ev) {
   var body = getEmailBody();
   var audience = (document.getElementById('em-audience') || {}).value || 'all';
   var customList = (document.getElementById('em-custom') || {}).value || '';
-  if (!subject.trim() || !String(body).trim() || String(body).replace(/<[^>]*>/g, '').trim() === '') {
+  var stripped = String(body).replace(/<(br|hr|\/p|\/div|\/h[1-6]|\/li|\/table)[^>]*>/gi, ' ')
+    .replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+  var hasMedia = /<img|<a\s|<video|<iframe/i.test(String(body));
+  if (!subject.trim() || (!stripped && !hasMedia)) {
     emailMsg('em-msg', 'Preencha assunto e mensagem.', 'error'); return;
   }
   emailMsg('em-msg', 'Criando campanha...');
