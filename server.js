@@ -11,6 +11,8 @@ const rateLimit = require('express-rate-limit');
 const { runAsync, allAsync, getAsync } = require('./db');
 const rssMonitor = require('./rss-monitor');
 const whatsappBot = require('./whatsapp-bot');
+const mailer = require('./mailer');
+const emailRoutes = require('./email-routes');
 
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err.message || err);
@@ -1930,6 +1932,26 @@ app.listen(PORT, () => {
   console.log(`Servidor iniciado em http://localhost:${PORT}`);
 });
 
+// ===== E-MAIL MARKETING (envio em massa com fila/throttling) =====
+app.use('/api/admin/email', requireAdmin, emailRoutes);
+
+// Descadastro (publico): aceita GET (clique) e POST (one-click)
+async function handleUnsubscribe(req, res) {
+  try {
+    const e = mailer.normEmail(req.query.e || (req.body && req.body.e) || '');
+    const t = String(req.query.t || (req.body && req.body.t) || '');
+    const okToken = !!(e && t && mailer.unsubToken(e) === t);
+    if (okToken) { try { await mailer.suppress(e, 'unsubscribe'); } catch (err) {} }
+    if (req.method === 'POST') return res.json({ ok: okToken });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Descadastro</title></head><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:40px 16px;text-align:center;color:#333;"><div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 2px 10px rgba(0,0,0,.08);"><h2>${okToken ? 'Descadastro confirmado' : 'Link inv├ílido'}</h2><p>${okToken ? 'Voc├¬ n├úo receber├í mais nossos e-mails. Sentiremos sua falta!' : 'N├úo conseguimos validar este link de descadastro.'}</p></div></body></html>`);
+  } catch (err) {
+    res.status(500).send('Erro ao processar descadastro.');
+  }
+}
+app.get('/api/unsubscribe', handleUnsubscribe);
+app.post('/api/unsubscribe', handleUnsubscribe);
+
 ensureAdminUser().then(async () => {
   await rssMonitor.start();
   await activateScheduledAds();
@@ -1939,6 +1961,10 @@ ensureAdminUser().then(async () => {
   // Iniciar job de alertas de vencimento de assinaturas
   checkExpiringSubscriptions();
   setInterval(checkExpiringSubscriptions, 12 * 60 * 60 * 1000); // Executar a cada 12 horas
+
+  // Iniciar worker de e-mail marketing (fila + throttling)
+  mailer.setDefaultBase(process.env.PUBLIC_URL || 'https://paralelocomunica.com.br');
+  mailer.startWorker();
 
   whatsappBot.start().catch(err => console.error('WhatsApp bot start error:', err.message));
 }).catch(err => {

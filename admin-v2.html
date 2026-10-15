@@ -92,6 +92,10 @@
           <span class="nav-icon">&#9733;</span>
           <span>Assinantes</span>
         </button>
+        <button class="sidebar-nav-item" data-section="emailmarketing">
+          <span class="nav-icon">&#9993;</span>
+          <span>E-mail Marketing</span>
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button id="btn-logout">
@@ -1063,6 +1067,151 @@
           </div>
         </section>
 
+        <!-- E-MAIL MARKETING -->
+        <section id="section-emailmarketing" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+              <div>
+                <h2>📧 Envio de E-mails em Massa</h2>
+                <span class="panel-subtitle">Os envios saem em fila, devagar e com limite diário — sem "tudo de uma vez" (evita bloqueio/spam).</span>
+              </div>
+              <button type="button" id="btn-email-settings" class="btn btn-secondary">⚙️ Configurar SMTP</button>
+            </div>
+            <div class="admin-panel-body">
+              <div class="stats-grid" id="email-stats" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:20px;"></div>
+            </div>
+          </div>
+
+          <!-- SMTP CONFIG -->
+          <div class="admin-panel hidden" id="email-config-panel">
+            <div class="admin-panel-header"><h2>Configuração de Envio (SMTP)</h2></div>
+            <div class="admin-panel-body">
+              <form id="email-config-form" class="admin-form">
+                <label>Servidor SMTP
+                  <input type="text" id="ec-host" placeholder="ex.: smtp-relay.brevo.com">
+                </label>
+                <label>Porta
+                  <input type="number" id="ec-port" placeholder="587" value="587">
+                </label>
+                <label style="flex-direction:row;gap:8px;align-items:center;">
+                  <input type="checkbox" id="ec-secure" style="width:auto;"> Usar SSL (porta 465)
+                </label>
+                <label>Usuário SMTP
+                  <input type="text" id="ec-user" placeholder="login do provedor">
+                </label>
+                <label>Senha / Chave SMTP
+                  <input type="password" id="ec-pass" placeholder="(deixe em branco para manter)">
+                </label>
+                <label>Nome do remetente
+                  <input type="text" id="ec-fromname" placeholder="ex.: Paralelo Comunica">
+                </label>
+                <label>E-mail remetente
+                  <input type="email" id="ec-fromemail" placeholder="contato@paralelocomunica.com.br">
+                </label>
+                <label>Responder para (opcional)
+                  <input type="email" id="ec-replyto" placeholder="contato@paralelocomunica.com.br">
+                </label>
+                <label>URL pública do site
+                  <input type="text" id="ec-publicurl" placeholder="https://paralelocomunica.com.br">
+                </label>
+                <label>Limite por dia
+                  <input type="number" id="ec-dailylimit" value="300" min="1">
+                </label>
+                <label>Limite por hora
+                  <input type="number" id="ec-hourlylimit" value="100" min="1">
+                </label>
+                <label>Intervalo entre e-mails (segundos)
+                  <input type="number" id="ec-gap" value="20" min="3">
+                </label>
+                <label style="flex-direction:row;gap:8px;align-items:center;">
+                  <input type="checkbox" id="ec-enabled" style="width:auto;"> Ativar envios
+                </label>
+                <div class="form-actions full-width" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                  <button type="submit" class="btn btn-primary">Salvar Configuração</button>
+                  <input type="email" id="ec-testto" placeholder="e-mail para teste" style="max-width:240px;">
+                  <button type="button" id="btn-email-test" class="btn btn-secondary">✉️ Enviar Teste</button>
+                  <span id="ec-msg" style="font-size:0.85rem;"></span>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- NOVA CAMPANHA -->
+          <div class="admin-panel">
+            <div class="admin-panel-header"><h2>Nova Campanha</h2></div>
+            <div class="admin-panel-body">
+              <form id="email-campaign-form" class="admin-form">
+                <label class="full-width">Assunto
+                  <input type="text" id="em-subject" placeholder="Assunto do e-mail" required>
+                </label>
+                <label>Público
+                  <select id="em-audience">
+                    <option value="all">Todos (Assinantes + Clientes)</option>
+                    <option value="subscribers">Assinantes</option>
+                    <option value="clients">Clientes</option>
+                    <option value="custom">Lista colada (e-mails)</option>
+                  </select>
+                </label>
+                <label style="justify-content:flex-end;">
+                  <span id="em-count" style="font-size:0.85rem;color:var(--text-muted,#888);">—</span>
+                </label>
+                <label class="full-width hidden" id="em-custom-wrap">E-mails (separe por vírgula ou linha)
+                  <textarea id="em-custom" rows="3" placeholder="a@x.com, b@y.com"></textarea>
+                </label>
+                <label class="full-width">Conteúdo (HTML permitido)
+                  <textarea id="em-body" rows="10" placeholder="<h2>Olá {nome}!</h2><p>Sua mensagem...</p>" required></textarea>
+                </label>
+                <div class="full-width" style="font-size:0.8rem;color:var(--text-muted,#888);margin-bottom:8px;">
+                  Personalize com <b>{nome}</b> e <b>{email}</b>. O link de descadastro é adicionado automaticamente.
+                </div>
+                <div class="form-actions full-width" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                  <button type="submit" class="btn btn-primary">Criar campanha</button>
+                  <span id="em-msg" style="font-size:0.85rem;"></span>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- CAMPANHAS -->
+          <div class="admin-panel">
+            <div class="admin-panel-header"><h2>Campanhas</h2></div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Assunto</th>
+                      <th>Público</th>
+                      <th>Status</th>
+                      <th>Progresso</th>
+                      <th>Criada</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="email-campaigns-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- LOG DE DESCADASTROS -->
+          <div class="admin-panel">
+            <div class="admin-panel-header" style="display:flex;justify-content:space-between;align-items:center;">
+              <h2>Descadastros / Supressão</h2>
+              <button type="button" id="btn-email-refresh" class="btn btn-secondary" style="padding:6px 12px;font-size:0.85rem;">Atualizar</button>
+            </div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead><tr><th>E-mail</th><th>Motivo</th><th>Data</th><th></th></tr></thead>
+                  <tbody id="email-sup-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- VISITAS & MÉTRICAS -->
         <section id="section-analytics" class="admin-section hidden">
           <div class="admin-panel">
@@ -1256,6 +1405,7 @@
     </div>
   </div>
 
-  <script src="admin-v2.js?v=5"></script>
+  <script src="admin-v2.js?v=6"></script>
+<script src="email-admin.js?v=1"></script>
 </body>
 </html>

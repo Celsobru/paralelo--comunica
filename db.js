@@ -154,6 +154,62 @@ db.serialize(() => {
     created_at TEXT NOT NULL
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS email_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    smtp_host TEXT DEFAULT '',
+    smtp_port INTEGER DEFAULT 587,
+    smtp_secure INTEGER DEFAULT 0,
+    smtp_user TEXT DEFAULT '',
+    smtp_pass TEXT DEFAULT '',
+    from_name TEXT DEFAULT '',
+    from_email TEXT DEFAULT '',
+    reply_to TEXT DEFAULT '',
+    public_url TEXT DEFAULT '',
+    daily_limit INTEGER DEFAULT 300,
+    hourly_limit INTEGER DEFAULT 100,
+    gap_seconds INTEGER DEFAULT 20,
+    enabled INTEGER DEFAULT 0,
+    updated_at TEXT
+  )`);
+
+  db.get('SELECT id FROM email_config WHERE id = 1', (err, row) => {
+    if (!err && !row) db.run("INSERT INTO email_config (id, updated_at) VALUES (1, datetime('now','localtime'))");
+  });
+
+  db.run(`CREATE TABLE IF NOT EXISTS email_campaigns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject TEXT NOT NULL,
+    body_html TEXT NOT NULL,
+    audience TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'draft',
+    total INTEGER DEFAULT 0,
+    sent_count INTEGER DEFAULT 0,
+    failed_count INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    started_at TEXT,
+    finished_at TEXT
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS email_recipients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL,
+    email TEXT NOT NULL,
+    name TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'queued',
+    error TEXT DEFAULT '',
+    sent_at TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(campaign_id) REFERENCES email_campaigns(id) ON DELETE CASCADE
+  )`);
+
+  db.run(`CREATE INDEX IF NOT EXISTS idx_email_recipients_campaign ON email_recipients(campaign_id, status)`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS email_suppressions (
+    email TEXT PRIMARY KEY,
+    reason TEXT DEFAULT 'unsubscribe',
+    created_at TEXT NOT NULL
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS site_stats (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     total_visitors INTEGER NOT NULL DEFAULT 0,
