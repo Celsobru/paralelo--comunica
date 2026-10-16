@@ -101,26 +101,32 @@ function buildCaption(news, cfg) {
 }
 
 /* ---------- conversao de imagem p/ JPG (Instagram exige JPEG) ---------- */
-let _Jimp = null, _jimpTried = false;
-function getJimp() {
-  if (_jimpTried) return _Jimp;
-  _jimpTried = true;
-  try { _Jimp = require('jimp'); } catch (e) { _Jimp = null; }
-  return _Jimp;
+let _sharp = null, _sharpTried = false;
+function getSharp() {
+  if (_sharpTried) return _sharp;
+  _sharpTried = true;
+  try { _sharp = require('sharp'); } catch (e) { _sharp = null; }
+  return _sharp;
 }
 
 async function toInstagramJpeg(localPath) {
-  const Jimp = getJimp();
-  if (!Jimp) return '';
-  const img = await Jimp.read(localPath);
-  let w = img.bitmap.width, h = img.bitmap.height;
-  const ratio = w / h;
-  if (ratio > 1.91) { const nw = Math.round(h * 1.91); img.crop(Math.round((w - nw) / 2), 0, nw, h); }
-  else if (ratio < 0.8) { const nh = Math.round(w / 0.8); img.crop(0, Math.round((h - nh) / 2), w, nh); }
-  w = img.bitmap.width; h = img.bitmap.height;
-  if (w > 1440) img.resize(1440, Jimp.AUTO);
+  const sharp = getSharp();
+  if (!sharp) return '';
+  // orienta pela EXIF e obtem dimensoes finais
+  const oriented = await sharp(localPath).rotate().toBuffer({ resolveWithObject: true });
+  const W = oriented.info.width, H = oriented.info.height;
+  if (!W || !H) throw new Error('Nao consegui ler a imagem');
+  // Instagram aceita proporcao entre 4:5 (0.8) e 1.91:1 -> corta o excedente
+  let cw = W, ch = H, cx = 0, cy = 0;
+  const ratio = W / H;
+  if (ratio > 1.91) { cw = Math.round(H * 1.91); cx = Math.round((W - cw) / 2); }
+  else if (ratio < 0.8) { ch = Math.round(W / 0.8); cy = Math.round((H - ch) / 2); }
   const outName = 'ig-' + Date.now() + '-' + Math.round(Math.random() * 1e6) + '.jpg';
-  await img.quality(90).writeAsync(path.join(UPLOAD_DIR, outName));
+  await sharp(oriented.data)
+    .extract({ left: cx, top: cy, width: cw, height: ch })
+    .resize({ width: 1440, withoutEnlargement: true })
+    .jpeg({ quality: 90 })
+    .toFile(path.join(UPLOAD_DIR, outName));
   return outName;
 }
 
