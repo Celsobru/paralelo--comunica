@@ -217,6 +217,34 @@ db.serialize(() => {
     created_at TEXT NOT NULL
   )`);
 
+  // ===== INSTAGRAM (publicacao automatica de noticias) =====
+  db.run(`CREATE TABLE IF NOT EXISTS instagram_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    ig_user_id TEXT DEFAULT '',
+    access_token TEXT DEFAULT '',
+    api_base TEXT DEFAULT 'https://graph.instagram.com',
+    api_version TEXT DEFAULT 'v21.0',
+    enabled INTEGER NOT NULL DEFAULT 0,
+    auto_post INTEGER NOT NULL DEFAULT 0,
+    include_link INTEGER NOT NULL DEFAULT 1,
+    default_hashtags TEXT DEFAULT '',
+    public_url TEXT DEFAULT '',
+    token_expires_at TEXT DEFAULT '',
+    updated_at TEXT
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS instagram_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    news_id INTEGER DEFAULT NULL,
+    media_type TEXT DEFAULT 'IMAGE',
+    ig_media_id TEXT DEFAULT '',
+    permalink TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    error TEXT DEFAULT '',
+    caption TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS site_stats (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     total_visitors INTEGER NOT NULL DEFAULT 0,

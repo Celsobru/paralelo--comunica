@@ -13,6 +13,8 @@ const rssMonitor = require('./rss-monitor');
 const whatsappBot = require('./whatsapp-bot');
 const mailer = require('./mailer');
 const emailRoutes = require('./email-routes');
+const instagram = require('./instagram');
+const instagramRoutes = require('./instagram-routes');
 
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err.message || err);
@@ -382,6 +384,28 @@ app.get('/api/ad-spaces-public', async (req, res) => {
 });
 
 // ===== ADMIN NEWS =====
+// Publicacao opcional no Instagram (assincrona, nao bloqueia a resposta)
+function maybePostToInstagram(newsId, explicit) {
+  setImmediate(async () => {
+    try {
+      const cfg = await instagram.getConfig();
+      if (!cfg.enabled) return;
+      if (!explicit && !cfg.auto_post) return;
+      const news = await getAsync('SELECT * FROM news WHERE id = ?', [newsId]);
+      if (!news || news.status !== 'published') return;
+      if (!news.image_url && !news.video_url) return;
+      if (!explicit) {
+        const already = await getAsync("SELECT id FROM instagram_posts WHERE news_id = ? AND status = 'published'", [newsId]);
+        if (already) return;
+      }
+      await instagram.publishNews(news);
+      console.log('[instagram] noticia #' + newsId + ' publicada no Instagram');
+    } catch (e) {
+      console.error('[instagram] falha ao publicar noticia #' + newsId + ':', e.message);
+    }
+  });
+}
+
 app.get('/api/admin/news', requireAdmin, async (req, res) => {
   const news = await allAsync('SELECT n.*, u.name AS author_name FROM news n LEFT JOIN users u ON n.author_id = u.id ORDER BY n.created_at DESC');
   res.json(news);
@@ -394,6 +418,7 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
     'INSERT INTO news (title, category, subcategory, description, full_content, image_url, video_url, source, datetime, status, author_id, ad_space_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now","localtime"))',
     [title, category, subcategory || '', description, full_content || '', image_url, video_url || '', source, datetime, status || 'published', authorId, ad_space_id || null]
   );
+  maybePostToInstagram(result.lastID, req.body.post_to_instagram === true || req.body.post_to_instagram === 'true');
   res.json({ id: result.lastID });
 });
 
@@ -408,6 +433,7 @@ app.put('/api/admin/news/:id', requireAdmin, async (req, res) => {
     'UPDATE news SET title = ?, category = ?, subcategory = ?, description = ?, full_content = ?, image_url = ?, video_url = ?, source = ?, datetime = ?, status = ?, ad_space_id = ? WHERE id = ?',
     [title, category, subcategory || '', description, full_content || '', finalImage, finalVideo, source, datetime, status, ad_space_id || null, id]
   );
+  maybePostToInstagram(id, req.body.post_to_instagram === true || req.body.post_to_instagram === 'true');
   res.json({ ok: true });
 });
 
@@ -1934,6 +1960,7 @@ app.listen(PORT, () => {
 
 // ===== E-MAIL MARKETING (envio em massa com fila/throttling) =====
 app.use('/api/admin/email', requireAdmin, emailRoutes);
+app.use('/api/admin/instagram', requireAdmin, instagramRoutes);
 
 // Descadastro (publico): aceita GET (clique) e POST (one-click)
 async function handleUnsubscribe(req, res) {
@@ -1965,6 +1992,10 @@ ensureAdminUser().then(async () => {
   // Iniciar worker de e-mail marketing (fila + throttling)
   mailer.setDefaultBase(process.env.PUBLIC_URL || 'https://paralelocomunica.com.br');
   mailer.startWorker();
+
+  // Iniciar worker do Instagram (renovacao automatica do token)
+  instagram.setDefaultBase(process.env.PUBLIC_URL || 'https://paralelocomunica.com.br');
+  instagram.startWorker();
 
   whatsappBot.start().catch(err => console.error('WhatsApp bot start error:', err.message));
 }).catch(err => {

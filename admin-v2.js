@@ -22,6 +22,7 @@ const sectionTitles = {
   subscribers: 'Assinantes',
   users: 'Usuários',
   emailmarketing: 'E-mail Marketing',
+  instagram: 'Instagram',
 };
 
 const sections = {
@@ -43,6 +44,7 @@ const sections = {
   subscribers: document.getElementById('section-subscribers'),
   users: document.getElementById('section-users'),
   emailmarketing: document.getElementById('section-emailmarketing'),
+  instagram: document.getElementById('section-instagram'),
 };
 
 const navItems = document.querySelectorAll('.sidebar-nav-item[data-section]');
@@ -63,6 +65,7 @@ function showSection(name) {
   if (name === 'analytics') loadAnalyticsSection();
   if (name === 'financial') loadFinancialSection();
   if (name === 'emailmarketing') initEmailSection();
+  if (name === 'instagram') initInstagramSection();
 }
 
 navItems.forEach(item => {
@@ -413,6 +416,7 @@ async function editNews(id) {
   document.getElementById('source').value = news.source || '';
   document.getElementById('datetime').value = news.datetime || '';
   document.getElementById('status').value = news.status || 'published';
+  if (document.getElementById('news-post-instagram')) document.getElementById('news-post-instagram').checked = false;
   if (document.getElementById('news-ad-space')) {
     document.getElementById('news-ad-space').value = news.ad_space_id || '';
   }
@@ -687,6 +691,7 @@ document.getElementById('news-form').addEventListener('submit', async event => {
     datetime: document.getElementById('datetime').value,
     status: document.getElementById('status').value,
     ad_space_id: adSpaceId ? Number(adSpaceId) : null,
+    post_to_instagram: !!(document.getElementById('news-post-instagram') && document.getElementById('news-post-instagram').checked),
   };
 
   if (editingNewsId) {

@@ -96,6 +96,10 @@
           <span class="nav-icon">&#9993;</span>
           <span>E-mail Marketing</span>
         </button>
+        <button class="sidebar-nav-item" data-section="instagram">
+          <span class="nav-icon">&#128247;</span>
+          <span>Instagram</span>
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button id="btn-logout">
@@ -240,6 +244,9 @@
                     <option value="published">Publicado</option>
                     <option value="draft">Rascunho</option>
                   </select>
+                </label>
+                <label style="flex-direction:row;gap:8px;align-items:center;">
+                  <input type="checkbox" id="news-post-instagram" style="width:auto;"> &#128247; Postar tamb&eacute;m no Instagram
                 </label>
                 <div class="form-actions">
                   <button type="submit" class="btn btn-primary">Salvar Notícia</button>
@@ -1239,6 +1246,83 @@
           </div>
         </section>
 
+        <!-- INSTAGRAM -->
+        <section id="section-instagram" class="admin-section hidden">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <div>
+                <h2>&#128247; Publica&ccedil;&atilde;o no Instagram</h2>
+                <span class="panel-subtitle">Ao publicar uma not&iacute;cia, ela vai automaticamente para o Instagram (foto + legenda + hashtags). A imagem continua no SEU servidor &mdash; o Instagram apenas &quot;puxa&quot; pela URL. Sem sobrecarga.</span>
+              </div>
+            </div>
+            <div class="admin-panel-body">
+              <form id="ig-config-form" class="admin-form">
+                <label style="flex-direction:row;gap:8px;align-items:center;">
+                  <input type="checkbox" id="ig-enabled" style="width:auto;"> Ativar publica&ccedil;&atilde;o no Instagram
+                </label>
+                <label style="flex-direction:row;gap:8px;align-items:center;">
+                  <input type="checkbox" id="ig-autopost" style="width:auto;"> Postar automaticamente ao publicar uma not&iacute;cia
+                </label>
+                <label>ID da conta do Instagram (IG User ID)
+                  <span style="display:flex;gap:8px;">
+                    <input type="text" id="ig-userid" placeholder="ex.: 17841400000000000" style="flex:1;">
+                    <button type="button" id="btn-ig-fetchid" class="btn btn-secondary" style="white-space:nowrap;">Buscar ID</button>
+                  </span>
+                </label>
+                <label>Token de acesso (Access Token)
+                  <input type="password" id="ig-token" placeholder="(deixe em branco para manter)" autocomplete="off">
+                </label>
+                <label>Hashtags padr&atilde;o (entram em toda postagem)
+                  <input type="text" id="ig-hashtags" placeholder="noticias novidades">
+                </label>
+                <label style="flex-direction:row;gap:8px;align-items:center;">
+                  <input type="checkbox" id="ig-includelink" style="width:auto;"> Incluir o link da not&iacute;cia na legenda
+                </label>
+                <label>URL p&uacute;blica do site
+                  <input type="text" id="ig-publicurl" placeholder="https://paralelocomunica.com.br">
+                </label>
+                <label>Servidor da API (avan&ccedil;ado)
+                  <input type="text" id="ig-apibase" placeholder="https://graph.instagram.com">
+                </label>
+                <label>Vers&atilde;o da API (avan&ccedil;ado)
+                  <input type="text" id="ig-apiversion" placeholder="v21.0">
+                </label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                  <button type="button" id="btn-ig-verify" class="btn btn-secondary">Testar conex&atilde;o</button>
+                  <button type="button" id="btn-ig-refresh" class="btn btn-secondary">Renovar token</button>
+                </div>
+                <div id="ig-status" style="margin-top:10px;font-size:.9rem;"></div>
+              </form>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-header"><h2>Publicar uma not&iacute;cia agora</h2></div>
+            <div class="admin-panel-body">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+                <label style="flex:1;min-width:260px;">Not&iacute;cia publicada
+                  <select id="ig-news-select"><option value="">Carregando...</option></select>
+                </label>
+                <button type="button" id="btn-ig-publish" class="btn btn-primary">&#128247; Publicar no Instagram</button>
+              </div>
+              <div id="ig-publish-status" style="margin-top:10px;font-size:.9rem;"></div>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-header"><h2>Hist&oacute;rico de publica&ccedil;&otilde;es</h2></div>
+            <div class="admin-panel-body">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead><tr><th>Not&iacute;cia</th><th>Tipo</th><th>Status</th><th>Data</th><th>Link</th></tr></thead>
+                  <tbody id="ig-log-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- VISITAS & MÉTRICAS -->
         <section id="section-analytics" class="admin-section hidden">
           <div class="admin-panel">
@@ -1432,7 +1516,8 @@
     </div>
   </div>
 
-  <script src="admin-v2.js?v=6"></script>
+  <script src="admin-v2.js?v=7"></script>
 <script src="email-admin.js?v=2"></script>
+<script src="instagram-admin.js?v=1"></script>
 </body>
 </html>
