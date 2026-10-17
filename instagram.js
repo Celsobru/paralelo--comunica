@@ -338,7 +338,7 @@ function startWorker() {
   };
   run();
   if (_timer) clearInterval(_timer);
-  _timer = setInterval(run, 30 * 24 * 60 * 60 * 1000);
+  _timer = setInterval(run, 24 * 60 * 60 * 1000);
   const bfRun = async () => { try { await backfillTick(); } catch (e) { console.error('[instagram] backfill tick falhou: ' + igError(e)); } };
   bfRun();
   if (_bfTimer) clearInterval(_bfTimer);
