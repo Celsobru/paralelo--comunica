@@ -134,7 +134,7 @@ async function publishInstagramNow() {
 }
 
 function initInstagramSection() {
-  if (_igInited) { loadInstagramConfig(); loadInstagramLog(); loadInstagramNewsOptions(); return; }
+  if (_igInited) { loadInstagramConfig(); loadInstagramLog(); loadInstagramNewsOptions(); igInjectBackfill(); igBackfillLoad(); return; }
   _igInited = true;
 
   var cfgForm = document.getElementById('ig-config-form');
@@ -151,4 +151,56 @@ function initInstagramSection() {
   loadInstagramConfig();
   loadInstagramLog();
   loadInstagramNewsOptions();
+  igInjectBackfill();
+  igBackfillLoad();
+}
+
+
+/* ---------- backfill UI (alimentar Instagram com noticias antigas) ---------- */
+function igInjectBackfill() {
+  if (document.getElementById('ig-backfill-card')) return;
+  var sec = document.getElementById('section-instagram');
+  if (!sec) return;
+  var card = document.createElement('div');
+  card.id = 'ig-backfill-card';
+  card.style.cssText = 'margin-top:18px;padding:16px;border:1px solid var(--border,#ddd);border-radius:10px;';
+  card.innerHTML = ''
+    + '<h3 style="margin:0 0 6px;">Alimentar Instagram com noticias antigas</h3>'
+    + '<p style="margin:0 0 10px;font-size:13px;opacity:.8;">Publica automaticamente as noticias antigas em fila, respeitando o limite do Instagram (aprox. 50 por dia). Continua rodando sozinho, mesmo se fechar o painel.</p>'
+    + '<div id="ig-backfill-stats" style="font-size:14px;margin-bottom:10px;">Carregando...</div>'
+    + '<button type="button" id="btn-ig-bf-start" style="padding:8px 14px;margin-right:6px;border:0;border-radius:6px;background:#27ae60;color:#fff;cursor:pointer;">Iniciar / continuar</button>'
+    + '<button type="button" id="btn-ig-bf-stop" style="padding:8px 14px;margin-right:6px;border:0;border-radius:6px;background:#e67e22;color:#fff;cursor:pointer;">Pausar</button>'
+    + '<button type="button" id="btn-ig-bf-refresh" style="padding:8px 14px;border:0;border-radius:6px;background:#3498db;color:#fff;cursor:pointer;">Atualizar</button>'
+    + '<div id="ig-backfill-msg" style="margin-top:8px;font-size:13px;"></div>';
+  sec.appendChild(card);
+  document.getElementById('btn-ig-bf-start').addEventListener('click', igBackfillStart);
+  document.getElementById('btn-ig-bf-stop').addEventListener('click', igBackfillStop);
+  document.getElementById('btn-ig-bf-refresh').addEventListener('click', igBackfillLoad);
+}
+
+async function igBackfillLoad() {
+  var el = document.getElementById('ig-backfill-stats');
+  if (!el) return;
+  try {
+    var r = await fetchJson('/api/admin/instagram/backfill');
+    var s = r.stats || {};
+    el.innerHTML = 'Na fila (a publicar): <b>' + (s.pending || 0) + '</b> | Publicadas: <b>' + (s.posted || 0) + '</b> | Falhas: <b>' + (s.failed || 0) + '</b> | Ultimas 24h: <b>' + (s.posted_last_24h || 0) + '/' + (s.per_day || 45) + '</b><br>Status: <b style="color:' + (s.running ? '#27ae60' : '#e67e22') + ';">' + (s.running ? 'RODANDO' : 'PAUSADO') + '</b>';
+  } catch (e) { el.textContent = 'Erro: ' + e.message; }
+}
+
+async function igBackfillStart() {
+  igMsg('ig-backfill-msg', 'Preparando a fila...', 'info');
+  try {
+    var r = await fetchJson('/api/admin/instagram/backfill/start', { method: 'POST', body: JSON.stringify({}) });
+    igMsg('ig-backfill-msg', 'Fila criada com ' + (r.added || 0) + ' noticia(s). Vai publicando aos poucos.', 'ok');
+    await igBackfillLoad();
+  } catch (e) { igMsg('ig-backfill-msg', 'Falha: ' + e.message, 'error'); }
+}
+
+async function igBackfillStop() {
+  try {
+    await fetchJson('/api/admin/instagram/backfill/stop', { method: 'POST', body: JSON.stringify({}) });
+    igMsg('ig-backfill-msg', 'Pausado. A fila fica guardada; clique em Iniciar para continuar.', 'ok');
+    await igBackfillLoad();
+  } catch (e) { igMsg('ig-backfill-msg', 'Falha: ' + e.message, 'error'); }
 }

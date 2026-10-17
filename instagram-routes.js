@@ -83,4 +83,31 @@ router.post('/news/:id/publish', async (req, res) => {
   } catch (e) { res.status(400).json({ success: false, error: ig.igError(e) }); }
 });
 
+/* ---------- backfill: publicar noticias antigas em fila ---------- */
+router.get('/backfill', async (req, res) => {
+  try { res.json({ success: true, stats: await ig.backfillStats() }); }
+  catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/backfill/start', async (req, res) => {
+  try {
+    const added = await ig.enqueueBackfill();
+    await ig.saveConfig({ backfill_enabled: 1 });
+    const first = await ig.backfillTick();
+    res.json({ success: true, added, first, stats: await ig.backfillStats() });
+  } catch (e) { res.status(400).json({ success: false, error: ig.igError(e) }); }
+});
+
+router.post('/backfill/stop', async (req, res) => {
+  try {
+    await ig.saveConfig({ backfill_enabled: 0 });
+    res.json({ success: true, stats: await ig.backfillStats() });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
+router.post('/backfill/clear', async (req, res) => {
+  try { await ig.clearBackfill(); res.json({ success: true }); }
+  catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+
 module.exports = router;

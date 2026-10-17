@@ -23,12 +23,13 @@ let _defaultBase = '';
 function setDefaultBase(base) { _defaultBase = String(base || '').replace(/\/+$/, ''); }
 function defaultBase() { return _defaultBase || process.env.PUBLIC_URL || ''; }
 
-const FIELDS = ['ig_user_id', 'access_token', 'api_base', 'api_version', 'enabled', 'auto_post', 'include_link', 'default_hashtags', 'public_url', 'token_expires_at'];
+const FIELDS = ['ig_user_id', 'access_token', 'api_base', 'api_version', 'enabled', 'auto_post', 'include_link', 'default_hashtags', 'public_url', 'token_expires_at', 'backfill_enabled', 'backfill_per_day'];
 const DEFAULTS = {
   id: 1, ig_user_id: '', access_token: '',
   api_base: 'https://graph.instagram.com', api_version: 'v21.0',
   enabled: 0, auto_post: 0, include_link: 1, default_hashtags: '',
   public_url: '', token_expires_at: '',
+  backfill_enabled: 0, backfill_per_day: 45,
 };
 
 async function getConfig() {
@@ -249,6 +250,67 @@ async function publishNews(news, opts) {
   }
 }
 
+/* ---------- backfill: publicar noticias antigas em fila ---------- */
+async function enqueueBackfill() {
+  const r = await runAsync(
+    "INSERT INTO instagram_queue (news_id, status, created_at) " +
+    "SELECT n.id, 'pending', datetime('now','localtime') FROM news n " +
+    "WHERE n.status = 'published' " +
+    "  AND ((n.image_url IS NOT NULL AND n.image_url <> '') OR (n.video_url IS NOT NULL AND n.video_url <> '')) " +
+    "  AND NOT EXISTS (SELECT 1 FROM instagram_posts p WHERE p.news_id = n.id AND p.status = 'published') " +
+    "  AND NOT EXISTS (SELECT 1 FROM instagram_queue q WHERE q.news_id = n.id) " +
+    "ORDER BY n.id ASC"
+  );
+  return (r && r.changes) ? r.changes : 0;
+}
+
+async function clearBackfill() {
+  await runAsync("DELETE FROM instagram_queue WHERE status IN ('pending','failed','skipped','processing')");
+  return true;
+}
+
+async function backfillStats() {
+  const q = await getAsync("SELECT COUNT(*) total, SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) pending, SUM(CASE WHEN status='posted' THEN 1 ELSE 0 END) posted, SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) failed, SUM(CASE WHEN status='skipped' THEN 1 ELSE 0 END) skipped FROM instagram_queue");
+  const p24 = await getAsync("SELECT COUNT(*) c FROM instagram_posts WHERE status='published' AND created_at > datetime('now','-1 day','localtime')");
+  const cfg = await getConfig();
+  return {
+    total: (q && q.total) || 0,
+    pending: (q && q.pending) || 0,
+    posted: (q && q.posted) || 0,
+    failed: (q && q.failed) || 0,
+    skipped: (q && q.skipped) || 0,
+    posted_last_24h: (p24 && p24.c) || 0,
+    per_day: Number(cfg.backfill_per_day) || 45,
+    running: !!cfg.backfill_enabled,
+  };
+}
+
+async function backfillTick() {
+  const cfg = await getConfig();
+  if (!cfg.enabled || !cfg.backfill_enabled) return { skipped: 'off' };
+  if (!cfg.access_token || !cfg.ig_user_id) return { skipped: 'no-config' };
+  const stats = await backfillStats();
+  if (stats.posted_last_24h >= stats.per_day) return { skipped: 'daily-limit' };
+  const item = await getAsync("SELECT * FROM instagram_queue WHERE status='pending' ORDER BY id ASC LIMIT 1");
+  if (!item) { await saveConfig({ backfill_enabled: 0 }); return { skipped: 'done' }; }
+  await runAsync("UPDATE instagram_queue SET status='processing' WHERE id = ?", [item.id]);
+  try {
+    const news = await getAsync("SELECT * FROM news WHERE id = ?", [item.news_id]);
+    if (!news || news.status !== 'published' || (!news.image_url && !news.video_url)) {
+      await runAsync("UPDATE instagram_queue SET status='skipped', processed_at=datetime('now','localtime') WHERE id = ?", [item.id]);
+      return { skipped: 'no-media', news_id: item.news_id };
+    }
+    const r = await publishNews(news);
+    await runAsync("UPDATE instagram_queue SET status='posted', processed_at=datetime('now','localtime') WHERE id = ?", [item.id]);
+    console.log('[instagram] backfill: noticia #' + news.id + ' publicada');
+    return { ok: true, news_id: news.id, permalink: r && r.permalink };
+  } catch (e) {
+    await runAsync("UPDATE instagram_queue SET status='failed', error=?, processed_at=datetime('now','localtime') WHERE id = ?", [String(igError(e)).slice(0, 400), item.id]);
+    console.error('[instagram] backfill falhou #' + item.news_id + ': ' + igError(e));
+    return { error: igError(e), news_id: item.news_id };
+  }
+}
+
 async function refreshToken() {
   const cfg = await getConfig();
   if (!cfg.access_token) return null;
@@ -258,7 +320,7 @@ async function refreshToken() {
   return r.data;
 }
 
-let _timer = null;
+let _timer = null, _bfTimer = null;
 function startWorker() {
   const run = async () => {
     try {
@@ -277,6 +339,10 @@ function startWorker() {
   run();
   if (_timer) clearInterval(_timer);
   _timer = setInterval(run, 30 * 24 * 60 * 60 * 1000);
+  const bfRun = async () => { try { await backfillTick(); } catch (e) { console.error('[instagram] backfill tick falhou: ' + igError(e)); } };
+  bfRun();
+  if (_bfTimer) clearInterval(_bfTimer);
+  _bfTimer = setInterval(bfRun, 15 * 60 * 1000);
   console.log('[instagram] worker iniciado');
 }
 
@@ -284,4 +350,5 @@ module.exports = {
   getConfig, saveConfig, setDefaultBase, defaultBase,
   buildCaption, normalizeTags, toPublicUrl, relToLocal,
   publishNews, publishImage, publishReel, getMe, refreshToken, startWorker, igError,
+  enqueueBackfill, clearBackfill, backfillStats, backfillTick,
 };

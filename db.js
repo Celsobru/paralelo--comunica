@@ -232,6 +232,10 @@ db.serialize(() => {
     token_expires_at TEXT DEFAULT '',
     updated_at TEXT
   )`);
+  db.run("ALTER TABLE instagram_config ADD COLUMN backfill_enabled INTEGER NOT NULL DEFAULT 0", () => {});
+  db.run("ALTER TABLE instagram_config ADD COLUMN backfill_per_day INTEGER NOT NULL DEFAULT 45", () => {});
+
+  db.run("CREATE TABLE IF NOT EXISTS instagram_queue (id INTEGER PRIMARY KEY AUTOINCREMENT, news_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, error TEXT DEFAULT '', created_at TEXT, processed_at TEXT)");
 
   db.run(`CREATE TABLE IF NOT EXISTS instagram_posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
