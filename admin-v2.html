@@ -1311,7 +1311,13 @@
           </div>
 
           <div class="admin-panel">
-            <div class="admin-panel-header"><h2>Hist&oacute;rico de publica&ccedil;&otilde;es</h2></div>
+            <div class="admin-panel-header">
+              <h2>Hist&oacute;rico de publica&ccedil;&otilde;es</h2>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span id="ig-log-status" style="font-size:12px;"></span>
+                <button type="button" id="btn-ig-clear-log" class="btn btn-secondary" style="font-size:12px;">Limpar erros</button>
+              </div>
+            </div>
             <div class="admin-panel-body">
               <div class="admin-table-wrap">
                 <table class="admin-table">
@@ -1518,6 +1524,6 @@
 
   <script src="admin-v2.js?v=7"></script>
 <script src="email-admin.js?v=2"></script>
-<script src="instagram-admin.js?v=2"></script>
+<script src="instagram-admin.js?v=3"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const ig = require('./instagram');
-const { getAsync, allAsync } = require('./db');
+const { getAsync, allAsync, runAsync } = require('./db');
 
 function mask(t) { t = String(t || ''); return t ? (t.slice(0, 6) + '...' + t.slice(-4)) : ''; }
 
@@ -70,6 +70,16 @@ router.get('/posts', async (req, res) => {
   try {
     const rows = await allAsync('SELECT * FROM instagram_posts ORDER BY id DESC LIMIT 100');
     res.json({ success: true, posts: rows });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* ---------- limpar historico de ERROS pelo front ----------
+   APAGA SOMENTE status <> 'published'. As linhas publicadas ficam:
+   elas sao o anteduplicacao do backfill (query com NOT EXISTS ... status='published'). */
+router.delete('/posts/failed', async (req, res) => {
+  try {
+    const r = await runAsync("DELETE FROM instagram_posts WHERE status <> 'published'");
+    res.json({ success: true, removed: (r && r.changes) || 0 });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 

@@ -181,8 +181,24 @@ async function getPermalink(cfg, id) {
 
 function igError(e) {
   const d = e && e.response && e.response.data;
-  if (d && d.error) return d.error.message + (d.error.code ? ' (code ' + d.error.code + ')' : '');
+  if (d && d.error) {
+    const err = d.error;
+    // Inclui a mensagem oficial do Meta (error_user_title/msg) - e la que vem a
+    // explicacao real do bloqueio ("acao requerida", "renovacao de dados" etc)
+    let msg = String(err.message || 'erro desconhecido');
+    if (err.error_user_title) msg += ' - ' + err.error_user_title;
+    if (err.error_user_msg) msg += ': ' + err.error_user_msg;
+    if (err.error_subcode) msg += ' (subcode ' + err.error_subcode + ')';
+    if (err.code) msg += ' (code ' + err.code + ')';
+    return msg;
+  }
   return (e && e.message) || String(e);
+}
+
+// OAuthException "API access blocked." (code 200) = o Meta restringiu a API do app
+function isApiBlocked(e) {
+  const d = e && e.response && e.response.data;
+  return !!(d && d.error && /access blocked/i.test(String(d.error.message || '')));
 }
 
 async function getMe(cfg) {
@@ -307,6 +323,12 @@ async function backfillTick() {
   } catch (e) {
     await runAsync("UPDATE instagram_queue SET status='failed', error=?, processed_at=datetime('now','localtime') WHERE id = ?", [String(igError(e)).slice(0, 400), item.id]);
     console.error('[instagram] backfill falhou #' + item.news_id + ': ' + igError(e));
+    // Bloqueio da API pelo Meta: pausa o backfill em vez de falhar item a item a cada 15 min
+    if (isApiBlocked(e)) {
+      await saveConfig({ backfill_enabled: 0 });
+      console.error('[instagram] API BLOQUEADA pelo Meta - backfill PAUSADO automaticamente. Corrija em developers.facebook.com (acoes requeridas / permissoes do app / renovacao de dados) e inicie de novo pelo painel.');
+      return { error: igError(e), api_blocked: true, news_id: item.news_id };
+    }
     return { error: igError(e), news_id: item.news_id };
   }
 }

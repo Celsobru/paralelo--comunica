@@ -15,6 +15,12 @@ function igGet(id) { var el = document.getElementById(id); return el ? el.value 
 function igSet(id, v) { var el = document.getElementById(id); if (el) el.value = (v === undefined || v === null) ? '' : v; }
 function igChk(id, v) { var el = document.getElementById(id); if (el) el.checked = !!v; }
 
+// Bloqueio da API pelo Meta (OAuthException 200 "API access blocked") -> orienta o usuario
+function igBlockedHint(msg) {
+  if (!/access blocked/i.test(String(msg))) return msg;
+  return msg + ' | O Meta bloqueou a API deste app. Abra developers.facebook.com -> seu app -> Caixa de entrada e responda as "acoes requeridas"; confira tambem App Review > Permissoes e a renovacao anual de uso de dados. Depois clique em "Verificar conexao".';
+}
+
 async function loadInstagramConfig() {
   try {
     var r = await fetchJson('/api/admin/instagram/config');
@@ -64,7 +70,7 @@ async function verifyInstagram() {
     var r = await fetchJson('/api/admin/instagram/verify', { method: 'POST', body: JSON.stringify({}) });
     var a = r.account || {};
     igMsg('ig-status', 'OK! Conta conectada: @' + (a.username || '?') + ' (' + (a.account_type || '') + ')', 'ok');
-  } catch (e) { igMsg('ig-status', 'Falha: ' + e.message, 'error'); }
+  } catch (e) { igMsg('ig-status', 'Falha: ' + igBlockedHint(e.message), 'error'); }
 }
 
 async function fetchInstagramId() {
@@ -75,7 +81,7 @@ async function fetchInstagramId() {
     var id = a.user_id || a.id || '';
     if (id) { igSet('ig-userid', id); igMsg('ig-status', 'ID encontrado: ' + id + ' (@' + (a.username || '') + '). Salve para aplicar.', 'ok'); }
     else igMsg('ig-status', 'Não consegui obter o ID. Verifique o token.', 'error');
-  } catch (e) { igMsg('ig-status', 'Falha: ' + e.message, 'error'); }
+  } catch (e) { igMsg('ig-status', 'Falha: ' + igBlockedHint(e.message), 'error'); }
 }
 
 async function refreshInstagramToken() {
@@ -84,7 +90,7 @@ async function refreshInstagramToken() {
     await fetchJson('/api/admin/instagram/refresh', { method: 'POST', body: JSON.stringify({}) });
     igMsg('ig-status', 'Token renovado por mais ~60 dias.', 'ok');
     await loadInstagramConfig();
-  } catch (e) { igMsg('ig-status', 'Falha: ' + e.message, 'error'); }
+  } catch (e) { igMsg('ig-status', 'Falha: ' + igBlockedHint(e.message), 'error'); }
 }
 
 var IG_STATUS_LABEL = { pending: 'Publicando...', published: 'Publicado', failed: 'Falhou' };
@@ -105,6 +111,16 @@ async function loadInstagramLog() {
         '<td style="color:' + color + ';font-weight:600;">' + label + '</td><td>' + when + '</td><td>' + link + '</td></tr>';
     }).join('');
   } catch (e) { tb.innerHTML = '<tr><td colspan="5" style="color:#e74c3c;">' + e.message + '</td></tr>'; }
+}
+
+async function clearInstagramFailedLog() {
+  if (!confirm('Remover os registros com ERRO do histórico?\n\nOs posts PUBLICADOS ficam - eles impedem a duplicação na fila de posts antigos.')) return;
+  try {
+    igMsg('ig-log-status', 'Limpando erros...', 'info');
+    var r = await fetchJson('/api/admin/instagram/posts/failed', { method: 'DELETE' });
+    igMsg('ig-log-status', 'Removidos ' + (r.removed || 0) + ' registro(s) com erro.', 'ok');
+    await loadInstagramLog();
+  } catch (e) { igMsg('ig-log-status', e.message, 'error'); }
 }
 
 async function loadInstagramNewsOptions() {
@@ -130,7 +146,7 @@ async function publishInstagramNow() {
     igMsg('ig-publish-status', 'Publicado com sucesso!', 'ok');
     document.getElementById('ig-publish-status').innerHTML += extra;
     await loadInstagramLog();
-  } catch (e) { igMsg('ig-publish-status', 'Falha: ' + e.message, 'error'); await loadInstagramLog(); }
+  } catch (e) { igMsg('ig-publish-status', 'Falha: ' + igBlockedHint(e.message), 'error'); await loadInstagramLog(); }
 }
 
 function initInstagramSection() {
@@ -147,6 +163,8 @@ function initInstagramSection() {
   if (refreshBtn) refreshBtn.addEventListener('click', refreshInstagramToken);
   var pubBtn = document.getElementById('btn-ig-publish');
   if (pubBtn) pubBtn.addEventListener('click', publishInstagramNow);
+  var clearLogBtn = document.getElementById('btn-ig-clear-log');
+  if (clearLogBtn) clearLogBtn.addEventListener('click', clearInstagramFailedLog);
 
   loadInstagramConfig();
   loadInstagramLog();
@@ -192,9 +210,10 @@ async function igBackfillStart() {
   igMsg('ig-backfill-msg', 'Preparando a fila...', 'info');
   try {
     var r = await fetchJson('/api/admin/instagram/backfill/start', { method: 'POST', body: JSON.stringify({}) });
-    igMsg('ig-backfill-msg', 'Fila criada com ' + (r.added || 0) + ' noticia(s). Vai publicando aos poucos.', 'ok');
+    if (r.first && r.first.api_blocked) { igMsg('ig-backfill-msg', 'API BLOQUEADA pelo Meta: ' + (r.first.error || '') + '. Backfill foi pausado automaticamente - siga a orientacao da tela de conexao e reinicie depois.', 'error'); }
+    else igMsg('ig-backfill-msg', 'Fila criada com ' + (r.added || 0) + ' noticia(s). Vai publicando aos poucos.', 'ok');
     await igBackfillLoad();
-  } catch (e) { igMsg('ig-backfill-msg', 'Falha: ' + e.message, 'error'); }
+  } catch (e) { igMsg('ig-backfill-msg', 'Falha: ' + igBlockedHint(e.message), 'error'); }
 }
 
 async function igBackfillStop() {
@@ -202,5 +221,5 @@ async function igBackfillStop() {
     await fetchJson('/api/admin/instagram/backfill/stop', { method: 'POST', body: JSON.stringify({}) });
     igMsg('ig-backfill-msg', 'Pausado. A fila fica guardada; clique em Iniciar para continuar.', 'ok');
     await igBackfillLoad();
-  } catch (e) { igMsg('ig-backfill-msg', 'Falha: ' + e.message, 'error'); }
+  } catch (e) { igMsg('ig-backfill-msg', 'Falha: ' + igBlockedHint(e.message), 'error'); }
 }
